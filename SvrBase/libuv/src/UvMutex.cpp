@@ -1,0 +1,21 @@
+#include "UvMutex.h"
+
+CUvMutex::CUvMutex(){
+    uv_mutex_init(&mstUvMutex);
+}
+
+CUvMutex::~CUvMutex(){
+    uv_mutex_destroy(&mstUvMutex);
+}
+
+void CUvMutex::Lock() {
+    uv_mutex_lock(&mstUvMutex);
+}
+
+void CUvMutex::UnLock() {
+    uv_mutex_unlock(&mstUvMutex);
+}
+
+int CUvMutex::TryLock() {
+    return uv_mutex_trylock(&mstUvMutex);
+}
