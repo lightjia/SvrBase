@@ -39,7 +39,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -97,16 +97,18 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>../third/libuv/include;libuv/include;cfg/include;base/include;../third/rapidjson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;IPHLPAPI.lib;Psapi.lib;Userenv.lib;../third/libuv/lib/libuv.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -149,12 +151,70 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="base\include\CLogmanager.h" />
+    <ClInclude Include="base\include\CMutex.h" />
+    <ClInclude Include="base\include\common.h" />
+    <ClInclude Include="base\include\CoreMgr.h" />
+    <ClInclude Include="base\include\CThread.h" />
+    <ClInclude Include="base\include\EventMgr.h" />
+    <ClInclude Include="base\include\Idle.h" />
+    <ClInclude Include="base\include\LocalDefine.h" />
+    <ClInclude Include="base\include\RcObject.h" />
+    <ClInclude Include="base\include\singleton.h" />
+    <ClInclude Include="base\include\Task.h" />
+    <ClInclude Include="base\include\util.h" />
+    <ClInclude Include="cfg\include\confdef.h" />
+    <ClInclude Include="cfg\include\Config.h" />
+    <ClInclude Include="cfg\include\JsonReadHandler.h" />
+    <ClInclude Include="cfg\include\rapidjsoninc.h" />
+    <ClInclude Include="libuv\include\UvBase.h" />
+    <ClInclude Include="libuv\include\uvdefine.h" />
+    <ClInclude Include="libuv\include\UvFile.h" />
+    <ClInclude Include="libuv\include\UvLoop.h" />
+    <ClInclude Include="libuv\include\UvLoopMgr.h" />
+    <ClInclude Include="libuv\include\UvMutex.h" />
+    <ClInclude Include="libuv\include\UvNetBase.h" />
+    <ClInclude Include="libuv\include\UvPipeBase.h" />
+    <ClInclude Include="libuv\include\UvPipeCli.h" />
+    <ClInclude Include="libuv\include\UvPipeSvr.h" />
+    <ClInclude Include="libuv\include\UvSem.h" />
+    <ClInclude Include="libuv\include\UvTaskPool.h" />
+    <ClInclude Include="libuv\include\UvTaskThread.h" />
+    <ClInclude Include="libuv\include\UvTcpCli.h" />
+    <ClInclude Include="libuv\include\UvTcpSvr.h" />
+    <ClInclude Include="libuv\include\UvThread.h" />
+    <ClInclude Include="libuv\include\UvUdp.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="base\src\CLogmanager.cpp" />
+    <ClCompile Include="base\src\CMutex.cpp" />
+    <ClCompile Include="base\src\CoreMgr.cpp" />
+    <ClCompile Include="base\src\CThread.cpp" />
+    <ClCompile Include="base\src\EventMgr.cpp" />
+    <ClCompile Include="base\src\Idle.cpp" />
+    <ClCompile Include="base\src\RcObject.cpp" />
+    <ClCompile Include="base\src\util.cpp" />
+    <ClCompile Include="cfg\src\Config.cpp" />
+    <ClCompile Include="cfg\src\JsonReadHandler.cpp" />
+    <ClCompile Include="libuv\src\UvBase.cpp" />
+    <ClCompile Include="libuv\src\UvFile.cpp" />
+    <ClCompile Include="libuv\src\UvLoop.cpp" />
+    <ClCompile Include="libuv\src\UvLoopMgr.cpp" />
+    <ClCompile Include="libuv\src\UvMutex.cpp" />
+    <ClCompile Include="libuv\src\UvNetBase.cpp" />
+    <ClCompile Include="libuv\src\UvPipeBase.cpp" />
+    <ClCompile Include="libuv\src\UvPipeCli.cpp" />
+    <ClCompile Include="libuv\src\UvPipeSvr.cpp" />
+    <ClCompile Include="libuv\src\UvSem.cpp" />
+    <ClCompile Include="libuv\src\UvTaskPool.cpp" />
+    <ClCompile Include="libuv\src\UvTaskThread.cpp" />
+    <ClCompile Include="libuv\src\UvTcpCli.cpp" />
+    <ClCompile Include="libuv\src\UvTcpSvr.cpp" />
+    <ClCompile Include="libuv\src\UvThread.cpp" />
+    <ClCompile Include="libuv\src\UvUdp.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="SvrBase.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
