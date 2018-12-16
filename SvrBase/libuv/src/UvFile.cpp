@@ -157,7 +157,7 @@ int CUvFile::OnCopyFile(uv_fs_t* pFileReq) {
 void CUvFile::FsOperCb(uv_fs_t* pFileReq) {
     CUvFile* pUvFile = (CUvFile*)uv_handle_get_data((uv_handle_t*)pFileReq);
     if (nullptr != pUvFile) {
-        switch (pFileReq->fs_type){
+        switch (uv_fs_get_type(pFileReq)){
         case UV_FS_CUSTOM:
             pUvFile->OnCustom(pFileReq);
             break;
