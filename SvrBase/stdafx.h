@@ -6,10 +6,10 @@
 #pragma once
 
 #include "targetver.h"
-
+#if (defined WIN32) || (defined _WIN32) ||(defined WIN64) || (defined _WIN64)
 #include <stdio.h>
 #include <tchar.h>
-
+#endif
 
 
 // TODO:  在此处引用程序需要的其他头文件
