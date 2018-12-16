@@ -2,6 +2,7 @@
 #define __UTIL__H_
 #include <algorithm>
 #include "common.h"
+#include "LocalDefine.h"
 
 //mem
 #define DOFREE(X) do{if(nullptr != X) {free(X); X = nullptr;}}while(0)
