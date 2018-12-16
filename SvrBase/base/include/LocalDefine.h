@@ -1,6 +1,6 @@
 #ifndef __LOCALDEFINE__H_
 #define __LOCALDEFINE__H_
-
+#include "common.h"
 #if (defined PLATFORM_WINDOWS)
 #elif  (defined PLATFORM_LINUX)
 typedef unsigned long       DWORD;

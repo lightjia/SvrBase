@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <time.h>
-#include "LocalDefine.h"
 #include <string>
 #include <iostream>
 #include <stdint.h>
