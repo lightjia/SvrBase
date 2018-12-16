@@ -1,4 +1,4 @@
-LIB_NAME ?= base
+LIB_NAME ?= svrbase
 CC = g++
 AR	= ar
 FLAG = -std=gnu++0x -fPIC
