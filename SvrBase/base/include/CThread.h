@@ -3,6 +3,7 @@
 #include "common.h"
 #include "CMutex.h"
 #include "Idle.h"
+#include "LocalDefine.h"
 
 enum THREADSTATE
 {
