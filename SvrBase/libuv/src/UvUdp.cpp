@@ -49,7 +49,14 @@ int CUvUdp::Send(char* pData, ssize_t iLen, const struct sockaddr* pAddr) {
     mcSendMutex.Lock();
     mqueSendBuf.push(stTmp);
     mcSendMutex.UnLock();
-    return uv_async_send(&mstUvSendAsync);
+
+	mcSendAsyncMutex.Lock();
+	if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
+		uv_async_send(&mstUvSendAsync);
+	}
+	mcSendAsyncMutex.UnLock();
+
+    return 0;
 }
 
 void CUvUdp::SendCb(uv_udp_send_t* pReq, int iStatus) {
@@ -71,6 +78,10 @@ void CUvUdp::SendCb(uv_udp_send_t* pReq, int iStatus) {
 }
 
 int CUvUdp::DoSend() {
+	if (uv_is_active((uv_handle_t*)&mstUvWriteReq)) {
+		return 0;
+	}
+
     memset(&mstWriteBuf, 0, sizeof(mstWriteBuf));
     tagUvUdpPkg stTmp;
     mcSendMutex.Lock();
@@ -108,8 +119,10 @@ int CUvUdp::Start() {
     uv_recv_buffer_size((uv_handle_t*)mpUdp, &iSockBufLen);
     uv_udp_recv_start(mpUdp, CUvBase::UvBufAlloc, CUvUdp::RecvCb);
 
+	mcSendAsyncMutex.Lock();
     uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
     uv_async_init(mpUvLoop, &mstUvSendAsync, CUvUdp::NotifySend);
+	mcSendAsyncMutex.UnLock();
 
     return DoSend();
 }
@@ -125,6 +138,14 @@ void CUvUdp::CleanSendQueue() {
 }
 
 int CUvUdp::Close() {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpUdp, 1);
+    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpUdp && !uv_is_closing((uv_handle_t*)mpUdp), 1);
+	mcSendAsyncMutex.Lock();
+	if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
+		uv_close((uv_handle_t*)&mstUvSendAsync, nullptr);
+	}
+	mcSendAsyncMutex.UnLock();
+
+	uv_close((uv_handle_t*)mpUdp, nullptr);
+	CleanSendQueue();
     return 0;
 }

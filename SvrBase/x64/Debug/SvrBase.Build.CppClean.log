@@ -22,8 +22,8 @@ f:\hjj\git\svrbase\svrbase\x64\debug\uvudp.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\stdafx.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\clogmanager.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\cmutex.obj
-f:\hjj\git\svrbase\svrbase\x64\debug\coremgr.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\cthread.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\coremgr.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\eventmgr.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\idle.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\rcobject.obj

@@ -10,7 +10,7 @@ void CUvPipeCli::RecvCb(uv_stream_t* pHandle, ssize_t nRead, const uv_buf_t* pBu
     CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pHandle);
     if (nullptr != pPipeCli) {
         if (nRead == 0) {
-            if (!uv_is_active((uv_handle_t*)pPipeCli->mpPipeCli)) {
+            if (uv_is_closing((uv_handle_t*)pPipeCli->mpPipeCli)) {
                 LOG_ERR("Cli is Closed!");
             }
 
@@ -37,7 +37,12 @@ void CUvPipeCli::SetPipeCli(uv_pipe_t* pPipeCli) {
 int CUvPipeCli::AfterConn() {
     Recv();
     uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
-    return uv_async_init(mpUvLoop, &mstUvSendAsync, CUvPipeCli::NotifySend);
+	mcSendAsyncMutex.Lock();
+	uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
+	uv_async_init(mpUvLoop, &mstUvSendAsync, CUvPipeCli::NotifySend);
+	mcSendAsyncMutex.UnLock();
+
+    return 0;
 }
 
 void CUvPipeCli::ConnCb(uv_connect_t* pReq, int iStatus) {
@@ -111,6 +116,10 @@ void CUvPipeCli::NotifySend(uv_async_t* pHandle) {
 }
 
 int CUvPipeCli::DoSend() {
+	if (uv_is_closing((uv_handle_t*)&mpPipeCli) || uv_is_active((uv_handle_t*)&mstUvWriteReq)) {
+		return 0;
+	}
+
     memset(&mstWriteBuf, 0, sizeof(mstWriteBuf));
     mcSendMutex.Lock();
     if (!mqueSendBuf.empty()) {
@@ -129,7 +138,7 @@ int CUvPipeCli::DoSend() {
 }
 
 int CUvPipeCli::Send(char* pData, ssize_t iLen) {
-    if (nullptr == pData || iLen <= 0 || nullptr == mpPipeCli || nullptr == mpUvLoop || uv_is_closing((uv_handle_t*)&mstUvWriteReq) != 0) {
+    if (nullptr == pData || iLen <= 0 || nullptr == mpPipeCli || nullptr == mpUvLoop || !uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
         return 1;
     }
 
@@ -140,7 +149,14 @@ int CUvPipeCli::Send(char* pData, ssize_t iLen) {
     mcSendMutex.Lock();
     mqueSendBuf.push(stTmp);
     mcSendMutex.UnLock();
-    return uv_async_send(&mstUvSendAsync);
+
+	mcSendAsyncMutex.Lock();
+	if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
+		uv_async_send(&mstUvSendAsync);
+	}
+	mcSendAsyncMutex.UnLock();
+
+    return 0;
 }
 
 void CUvPipeCli::CleanSendQueue() {
@@ -161,13 +177,15 @@ void CUvPipeCli::CloseCb(uv_handle_t* pHandle) {
 }
 
 int CUvPipeCli::Close() {
-    if (nullptr == mpPipeCli || nullptr == mpUvLoop || uv_is_closing((uv_handle_t*)mpPipeCli) != 0) {
+    if (nullptr == mpPipeCli || nullptr == mpUvLoop || uv_is_closing((uv_handle_t*)mpPipeCli)) {
         return 1;
     }
 
-    if (uv_is_active((uv_handle_t*)&mstUvSendAsync) != 0) {
-        uv_close((uv_handle_t*)&mstUvSendAsync, nullptr);
-    }
+	mcSendAsyncMutex.Lock();
+	if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
+		uv_close((uv_handle_t*)&mstUvSendAsync, nullptr);
+	}
+	mcSendAsyncMutex.UnLock();
 
     uv_close((uv_handle_t*)mpPipeCli, CUvPipeCli::CloseCb);
     CleanSendQueue();

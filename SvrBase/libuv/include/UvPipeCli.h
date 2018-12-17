@@ -40,6 +40,7 @@ protected:
     uv_connect_t* mpUvConn;
 
 private:
+	CUvMutex mcSendAsyncMutex;
     uv_async_t mstUvSendAsync;
     std::queue<uv_buf_t> mqueSendBuf;
     CUvMutex mcSendMutex;

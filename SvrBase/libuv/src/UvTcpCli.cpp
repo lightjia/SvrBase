@@ -15,7 +15,7 @@ void CUvTcpCli::RecvCb(uv_stream_t* pHandle, ssize_t nRead, const uv_buf_t* pBuf
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pHandle);
     if (nullptr != pTcpCli){
         if (nRead == 0){
-            if (!uv_is_active((uv_handle_t*)pTcpCli->mpTcpCli)){
+            if (uv_is_closing((uv_handle_t*)pTcpCli->mpTcpCli)){
                 LOG_ERR("Cli is Closed!");
             }
 
@@ -146,6 +146,10 @@ void CUvTcpCli::NotifySend(uv_async_t* pHandle){
 }
 
 int CUvTcpCli::DoSend() {
+	if (uv_is_closing((uv_handle_t*)&mpTcpCli) || uv_is_active((uv_handle_t*)&mstUvWriteReq)) {
+		return 0;
+	}
+
     memset(&mstWriteBuf, 0, sizeof(mstWriteBuf));
     mcSendMutex.Lock();
     if (!mqueSendBuf.empty()) {
@@ -164,7 +168,7 @@ int CUvTcpCli::DoSend() {
 }
 
 int CUvTcpCli::Send(char* pData, ssize_t iLen){
-    if (nullptr == pData || iLen <= 0 || nullptr == mpTcpCli || nullptr == mpUvLoop || uv_is_active((uv_handle_t*)&mstUvSendAsync) == 0) {
+    if (nullptr == pData || iLen <= 0 || nullptr == mpTcpCli || nullptr == mpUvLoop || !uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
         return 1;
     }
 
@@ -177,7 +181,7 @@ int CUvTcpCli::Send(char* pData, ssize_t iLen){
     mcSendMutex.UnLock();
 
     mcSendAsyncMutex.Lock();
-    if (uv_is_active((uv_handle_t*)&mstUvSendAsync) != 0) {
+    if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
         uv_async_send(&mstUvSendAsync);
     }
     mcSendAsyncMutex.UnLock();
@@ -208,7 +212,7 @@ int CUvTcpCli::Close() {
     }
 
     mcSendAsyncMutex.Lock();
-    if (uv_is_active((uv_handle_t*)&mstUvSendAsync) != 0) {
+    if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
         uv_close((uv_handle_t*)&mstUvSendAsync, nullptr);
     }
     mcSendAsyncMutex.UnLock();

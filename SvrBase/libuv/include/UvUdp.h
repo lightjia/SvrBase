@@ -35,6 +35,7 @@ protected:
     uv_udp_t* mpUdp;
 
 private:
+	CUvMutex mcSendAsyncMutex;
     uv_async_t mstUvSendAsync;
     std::queue<tagUvUdpPkg> mqueSendBuf;
     CUvMutex mcSendMutex;
