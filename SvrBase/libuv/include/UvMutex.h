@@ -10,6 +10,7 @@ public:
     void Lock();
     int TryLock();
     void UnLock();
+	uv_mutex_t* GetMutex();
 
 private:
     uv_mutex_t mstUvMutex;

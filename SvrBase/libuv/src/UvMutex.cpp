@@ -19,3 +19,7 @@ void CUvMutex::UnLock() {
 int CUvMutex::TryLock() {
     return uv_mutex_trylock(&mstUvMutex);
 }
+
+uv_mutex_t* CUvMutex::GetMutex() {
+	return &mstUvMutex;
+}

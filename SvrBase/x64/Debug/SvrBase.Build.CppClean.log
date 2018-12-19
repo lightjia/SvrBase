@@ -1,8 +1,6 @@
 f:\hjj\git\svrbase\svrbase\x64\debug\svrbase.pdb
 f:\hjj\git\svrbase\svrbase\x64\debug\svrbase.idb
-f:\hjj\git\svrbase\svrbase\x64\debug\util.obj
-f:\hjj\git\svrbase\svrbase\x64\debug\config.obj
-f:\hjj\git\svrbase\svrbase\x64\debug\jsonreadhandler.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\uvbarrier.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvbase.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvfile.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvloop.obj
@@ -12,6 +10,7 @@ f:\hjj\git\svrbase\svrbase\x64\debug\uvnetbase.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvpipebase.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvpipecli.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvpipesvr.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\uvrwlock.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvsem.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvtaskpool.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\uvtaskthread.obj
@@ -22,11 +21,15 @@ f:\hjj\git\svrbase\svrbase\x64\debug\uvudp.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\stdafx.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\clogmanager.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\cmutex.obj
-f:\hjj\git\svrbase\svrbase\x64\debug\cthread.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\coremgr.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\cthread.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\eventmgr.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\idle.obj
 f:\hjj\git\svrbase\svrbase\x64\debug\rcobject.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\util.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\config.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\jsonreadhandler.obj
+f:\hjj\git\svrbase\svrbase\x64\debug\uvcond.obj
 f:\hjj\git\svrbase\x64\debug\svrbase.lib
 f:\hjj\git\svrbase\x64\debug\svrbase.pdb
 f:\hjj\git\svrbase\svrbase\x64\debug\svrbase.tlog\cl.command.1.tlog

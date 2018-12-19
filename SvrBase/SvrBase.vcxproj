@@ -167,7 +167,9 @@
     <ClInclude Include="cfg\include\Config.h" />
     <ClInclude Include="cfg\include\JsonReadHandler.h" />
     <ClInclude Include="cfg\include\rapidjsoninc.h" />
+    <ClInclude Include="libuv\include\UvBarrier.h" />
     <ClInclude Include="libuv\include\UvBase.h" />
+    <ClInclude Include="libuv\include\UvCond.h" />
     <ClInclude Include="libuv\include\uvdefine.h" />
     <ClInclude Include="libuv\include\UvFile.h" />
     <ClInclude Include="libuv\include\UvLoop.h" />
@@ -177,6 +179,7 @@
     <ClInclude Include="libuv\include\UvPipeBase.h" />
     <ClInclude Include="libuv\include\UvPipeCli.h" />
     <ClInclude Include="libuv\include\UvPipeSvr.h" />
+    <ClInclude Include="libuv\include\UvRwLock.h" />
     <ClInclude Include="libuv\include\UvSem.h" />
     <ClInclude Include="libuv\include\UvTaskPool.h" />
     <ClInclude Include="libuv\include\UvTaskThread.h" />
@@ -198,7 +201,9 @@
     <ClCompile Include="base\src\util.cpp" />
     <ClCompile Include="cfg\src\Config.cpp" />
     <ClCompile Include="cfg\src\JsonReadHandler.cpp" />
+    <ClCompile Include="libuv\src\UvBarrier.cpp" />
     <ClCompile Include="libuv\src\UvBase.cpp" />
+    <ClCompile Include="libuv\src\UvCond.cpp" />
     <ClCompile Include="libuv\src\UvFile.cpp" />
     <ClCompile Include="libuv\src\UvLoop.cpp" />
     <ClCompile Include="libuv\src\UvLoopMgr.cpp" />
@@ -207,6 +212,7 @@
     <ClCompile Include="libuv\src\UvPipeBase.cpp" />
     <ClCompile Include="libuv\src\UvPipeCli.cpp" />
     <ClCompile Include="libuv\src\UvPipeSvr.cpp" />
+    <ClCompile Include="libuv\src\UvRwLock.cpp" />
     <ClCompile Include="libuv\src\UvSem.cpp" />
     <ClCompile Include="libuv\src\UvTaskPool.cpp" />
     <ClCompile Include="libuv\src\UvTaskThread.cpp" />
