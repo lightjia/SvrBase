@@ -6,7 +6,7 @@
 #if (defined PLATFORM_WINDOWS)
 #include<Windows.h>  
 #include<DbgHelp.h>  
-#pragma comment(lib,"DbgHelp.lib") 
+//#pragma comment(lib,"DbgHelp.lib") 
 #elif  (defined PLATFORM_LINUX)
 #endif
 

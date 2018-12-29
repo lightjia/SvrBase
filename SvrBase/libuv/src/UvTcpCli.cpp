@@ -88,8 +88,8 @@ int CUvTcpCli::Connect(std::string strIp, unsigned short sPort){
     uv_tcp_init(mpUvLoop, mpTcpCli);
     if (musPort > 0) {
         int iRet = uv_tcp_bind(mpTcpCli, (struct sockaddr*)&mstLocalAddr, SO_REUSEADDR);
-        if (iRet < 0){
-            LOG_ERR("uv_tcp_bind error:%s", uv_strerror(-iRet));
+        if (iRet){
+            LOG_ERR("uv_tcp_bind error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
             return 1;
         }
     }
@@ -123,12 +123,12 @@ void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
         pTcpCli->mcSendMutex.UnLock();
 
         pTcpCli->OnSend(iStatus);
-        if (iStatus < 0) {
+        if (iStatus) {
             if (iStatus == UV_ECANCELED) {
                 return;
             }
 
-            LOG_ERR("uv_write:%s", uv_strerror(-iStatus));
+            LOG_ERR("uv_write:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
             pTcpCli->Close();
         }
         else

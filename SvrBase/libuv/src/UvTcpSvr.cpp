@@ -17,16 +17,16 @@ uv_tcp_t* CUvTcpSvr::AllocTcpCli() {
 void CUvTcpSvr::ConnCb(uv_stream_t* pHandle, int iStatus){
     CUvTcpSvr* pTcpSvr = (CUvTcpSvr*)uv_handle_get_data((uv_handle_t*)pHandle);
     if (nullptr != pTcpSvr){
-        if (iStatus < 0){
-            LOG_ERR("uv_listen error:%s", uv_strerror(-iStatus));
+        if (iStatus){
+            LOG_ERR("uv_conn error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
             return;
         }
 
         uv_tcp_t* pTcpCli = pTcpSvr->AllocTcpCli();
         ASSERT_RET(nullptr != pTcpCli);
         int iRet = uv_accept((uv_stream_t*)pTcpSvr->mpTcpSvr, (uv_stream_t*)pTcpCli);
-        if (iRet < 0){
-            LOG_ERR("uv_accept error:%s", uv_strerror(-iRet));
+        if (iRet){
+            LOG_ERR("uv_accept error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
             return;
         }
 
@@ -44,8 +44,8 @@ int CUvTcpSvr::Listen(int iBackLog){
     uv_handle_set_data((uv_handle_t*)mpTcpSvr, (void*)this);
     uv_tcp_init(mpUvLoop, mpTcpSvr);
     int iRet = uv_tcp_bind(mpTcpSvr, (struct sockaddr*)&mstLocalAddr, SO_REUSEADDR);
-    if (iRet < 0){
-        LOG_ERR("uv_tcp_bind error:%s", uv_strerror(-iRet));
+    if (iRet){
+        LOG_ERR("uv_tcp_bind error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
         return 1;
     }
 

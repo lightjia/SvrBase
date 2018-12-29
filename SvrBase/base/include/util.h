@@ -47,6 +47,8 @@ bool directory_exists(const char* strDirectory);
 int make_dir(const char* path);	//创建目录
 int make_dirs(const char* path);	//创建多层目录
 const char* get_flietype(const char *pFileName);
+int rm_file(const char* pFileName);
+int rm_dir(const char* pDirName);
 
 //network
 int init_platform();

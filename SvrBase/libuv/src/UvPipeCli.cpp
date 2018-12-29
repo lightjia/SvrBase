@@ -93,12 +93,12 @@ void CUvPipeCli::SendCb(uv_write_t* pReq, int iStatus) {
         pPipeCli->mcSendMutex.UnLock();
 
         pPipeCli->OnSend(iStatus);
-        if (iStatus < 0) {
+        if (iStatus) {
             if (iStatus == UV_ECANCELED) {
                 return;
             }
 
-            LOG_ERR("uv_write:%s", uv_strerror(-iStatus));
+			LOG_ERR("uv_write:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
             pPipeCli->Close();
         }
         else

@@ -106,8 +106,8 @@ int CUvUdp::Start() {
     uv_handle_set_data((uv_handle_t*)mpUdp, (void*)this);
     if (musPort > 0) {
         int iRet = uv_udp_bind(mpUdp, (struct sockaddr*)&mstLocalAddr, UV_UDP_REUSEADDR);
-        if (iRet < 0) {
-            LOG_ERR("uv_udp_bind error:%s,port(%d)", uv_strerror(-iRet), mstLocalAddr.sin_port);
+        if (iRet) {
+            LOG_ERR("uv_udp_bind error:%s %s,port(%d)", uv_strerror(iRet), uv_err_name(iRet), mstLocalAddr.sin_port);
             return 1;
         }
     }

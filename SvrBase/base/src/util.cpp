@@ -494,6 +494,47 @@ FILE* safe_open_file(const char* pFileName, const char* pMode)
 	return pRet;
 }
 
+int rm_file(const char* pFileName) {
+	if (strlen(pFileName) <= 0) {
+		return 1;
+	}
+
+	int iRet;
+#if (defined PLATFORM_WINDOWS)
+	iRet = DeleteFileA(pFileName);
+#elif  (defined PLATFORM_LINUX)
+	iRet = unlink(pFileName);
+#endif
+	return iRet;
+}
+
+int rm_dir(const char* pDirName) {
+	if (strlen(pDirName) <= 0) {
+		return 1;
+	}
+
+#if (defined PLATFORM_WINDOWS)
+	_finddata_t dir_info;
+	_finddata_t file_info;
+	intptr_t f_handle;
+	if ((f_handle = _findfirst(pDirName, &dir_info)) != -1)
+	{
+		while (_findnext(f_handle, &file_info) == 0) {
+			if (strcmp(file_info.name, "..") == 0 || strcmp(file_info.name, ".") == 0) {
+				continue;
+			}
+
+			if ((file_info.attrib &_A_SUBDIR) == _A_SUBDIR) {
+
+			}
+		}
+	}
+#elif  (defined PLATFORM_LINUX)
+#endif
+
+	return 0;
+}
+
 len_str get_bmp(const void* pBmp, int width, int height, int bitCount)
 {
 	len_str stImg;
