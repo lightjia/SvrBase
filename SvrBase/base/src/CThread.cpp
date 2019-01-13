@@ -34,10 +34,10 @@ void CThread::Activate()
 
 void* CThread::ThreadEntry(void* pParam)
 {
-	void* pRet = nullptr;
+	void* pRet = NULL;
 
 	CThread* pThread = reinterpret_cast<CThread*>(pParam);
-	if (nullptr != pThread)
+	if (NULL != pThread)
 	{
     pThread->miThreadState = THREAD_STATE_RUN;
 		pThread->mdwThreadID = get_thread_id_self();
@@ -61,7 +61,7 @@ int CThread::Start(bool bWaitCreateSuccesss)
 		return 1;
 	}
 #elif  (defined PLATFORM_LINUX)
-	if (::pthread_create((pthread_t*)&mdwThreadID, nullptr, CThread::ThreadEntry, (void*)this) != 0)
+	if (::pthread_create((pthread_t*)&mdwThreadID, NULL, CThread::ThreadEntry, (void*)this) != 0)
 	{
 		return 1;
 	}

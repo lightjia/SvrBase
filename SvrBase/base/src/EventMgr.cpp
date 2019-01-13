@@ -7,7 +7,7 @@ CEventMgr::~CEventMgr(){
 }
 
 int CEventMgr::AddListener(std::string strListenName, CEventListener* pListener) {
-    ASSERT_RET_VALUE(nullptr != pListener, 1);
+    ASSERT_RET_VALUE(NULL != pListener, 1);
     LOG_INFO("Enter CEventMgr::AddListener");
     mcMapEventListenersMutex.Lock();
     std::map<std::string, std::set<CEventListener*>>::iterator iter_map = mmapEventListeners.find(strListenName);
@@ -27,7 +27,7 @@ int CEventMgr::AddListener(std::string strListenName, CEventListener* pListener)
 }
 
 int CEventMgr::DelListener(CEventListener* pListener) {
-    ASSERT_RET_VALUE(nullptr != pListener, 1);
+    ASSERT_RET_VALUE(NULL != pListener, 1);
     LOG_INFO("Enter CEventMgr::DelListener");
     bool bFlag = false;
     mcMapEventListenersMutex.Lock();
@@ -52,7 +52,7 @@ int CEventMgr::DispatchEvent(std::string strListenName, void* pParam) {
     for (std::map<std::string, std::set<CEventListener*>>::iterator iter_map = mmapEventListeners.begin(); iter_map != mmapEventListeners.end(); ++iter_map) {
         for (std::set<CEventListener*>::iterator iter_set = iter_map->second.begin(); iter_set != iter_map->second.end(); ++iter_set) {
             CEventListener* pListener = *iter_set;
-            if (nullptr != pListener) {
+            if (NULL != pListener) {
                 pListener->OnEvent(pParam);
             }
         }

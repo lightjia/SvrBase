@@ -2,6 +2,7 @@
 #define __CUVTCPCLI__H_
 #include "UvNetBase.h"
 #include <queue>
+#include <map>
 class CUvTcpCli : public CUvNetBase{
 public:
     CUvTcpCli();
@@ -42,8 +43,7 @@ private:
     CUvMutex mcSendAsyncMutex;
     std::queue<uv_buf_t> mqueSendBuf;
     CUvMutex mcSendMutex;
-    uv_write_t mstUvWriteReq;
-    uv_buf_t mstWriteBuf;
+    std::map<uv_write_t*, uv_buf_t*> mmapSend;
 };
 
 #endif

@@ -12,7 +12,7 @@ CUvNetBase::~CUvNetBase()
 }
 
 int CUvNetBase::SetNetParam(const char* pIp, unsigned short iPort) {
-    if (nullptr != pIp && strlen(pIp) > 0) {
+    if (NULL != pIp && strlen(pIp) > 0) {
         mstrIp = pIp;
     }
    

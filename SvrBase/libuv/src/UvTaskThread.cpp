@@ -2,7 +2,7 @@
 #include "UvTaskPool.h"
 
 CUvTaskThread::CUvTaskThread(){
-    mpTask = nullptr;
+    mpTask = NULL;
 }
 
 CUvTaskThread::~CUvTaskThread(){
@@ -10,7 +10,7 @@ CUvTaskThread::~CUvTaskThread(){
 
 int CUvTaskThread::OnThreadRun() {
     for (;;) {
-        if (nullptr == mpTask) {
+        if (NULL == mpTask) {
             sUvTaskPool->PushTaskThread(this);
             Wait();
             continue;
@@ -20,14 +20,14 @@ int CUvTaskThread::OnThreadRun() {
         mpTask->TaskExcute();
         mpTask->TaskQuit();
         UNREF(mpTask);
-        mpTask = nullptr;
+        mpTask = NULL;
     }
 
     return 0;
 }
 
 int CUvTaskThread::SetTask(CTask* pTask) {
-    ASSERT_RET_VALUE(nullptr != pTask && nullptr == mpTask, 1);
+    ASSERT_RET_VALUE(NULL != pTask && NULL == mpTask, 1);
     mpTask = pTask;
     REF(mpTask);
     return 0;

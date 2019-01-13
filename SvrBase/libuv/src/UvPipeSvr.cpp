@@ -1,7 +1,7 @@
 #include "UvPipeSvr.h"
 
 CUvPipeSvr::CUvPipeSvr(){
-    mpPipeSvr = nullptr;
+    mpPipeSvr = NULL;
 }
 
 CUvPipeSvr::~CUvPipeSvr(){
@@ -16,14 +16,14 @@ uv_pipe_t* CUvPipeSvr::AllocPipeCli() {
 
 void CUvPipeSvr::ConnCb(uv_stream_t* pHandle, int iStatus) {
     CUvPipeSvr* pTcpSvr = (CUvPipeSvr*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pTcpSvr) {
+    if (NULL != pTcpSvr) {
         if (iStatus) {
             LOG_ERR("uv_conn error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
             return;
         }
 
         uv_pipe_t* pPipeCli = pTcpSvr->AllocPipeCli();
-        ASSERT_RET(nullptr != pPipeCli);
+        ASSERT_RET(NULL != pPipeCli);
         int iRet = uv_accept((uv_stream_t*)pTcpSvr->mpPipeSvr, (uv_stream_t*)pPipeCli);
         if (iRet) {
             LOG_ERR("uv_accept error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
@@ -37,12 +37,10 @@ void CUvPipeSvr::ConnCb(uv_stream_t* pHandle, int iStatus) {
 }
 
 int CUvPipeSvr::Listen(int iBackLog) {
-    if (nullptr == mpUvLoop || nullptr == mpPipeSvr) {
-        return 1;
-    }
+    ASSERT_RET_VALUE(mpUvLoop && mpPipeSvr, 1);
 
     /*uv_fs_t stUvFsReq;
-    uv_fs_unlink(GetUvLoop(), &stUvFsReq, mstrPipeName.c_str(), nullptr);*/
+    uv_fs_unlink(GetUvLoop(), &stUvFsReq, mstrPipeName.c_str(), NULL);*/
     uv_handle_set_data((uv_handle_t*)mpPipeSvr, (void*)this);
     uv_pipe_init(GetUvLoop(), mpPipeSvr, miIpc);
     int iRet = uv_pipe_bind(mpPipeSvr, mstrPipeName.c_str());

@@ -12,6 +12,8 @@ public:
     ~CUvTaskPool();
 
 public:
+    int Init();
+    int UnInit();
     int PushTask(CTask* pTask);
     int PushTaskThread(CUvTaskThread* pTaskThread);
 
@@ -23,6 +25,7 @@ protected:
     int OnThreadRun();
 
 private:
+    bool mbStart;
     std::queue<CTask*> mqueTasks;
     CUvMutex mcQueTasksMutex;
 

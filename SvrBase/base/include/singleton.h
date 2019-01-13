@@ -28,7 +28,7 @@ private:
 	public:
 		~CGarbo()
 		{
-			if (nullptr != CSingleton::mpInstance)
+			if (NULL != CSingleton::mpInstance)
 			{
 				DODELETE(CSingleton::mpInstance);
 			}
@@ -44,7 +44,7 @@ private:
 };
 
 template <typename T>
-T* CSingleton<T>::mpInstance = nullptr;
+T* CSingleton<T>::mpInstance = NULL;
 
 template <typename T>
 CMutex CSingleton<T>::mcStaticMutex;
@@ -55,10 +55,10 @@ CMutex CSingleton<T>::mcStaticMutex;
 template <typename T>
 T* CSingleton<T>::Instance()
 {
-	if (nullptr == mpInstance)
+	if (NULL == mpInstance)
 	{
 		mcStaticMutex.Lock();
-		while (nullptr == mpInstance)
+		while (NULL == mpInstance)
 		{
 			mpInstance = new T();
 		}

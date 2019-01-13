@@ -18,7 +18,7 @@ protected:
 
 #define REF(X) \
 do{\
-if(nullptr != (X))	\
+if(NULL != (X))	\
 {	\
 (X)->IncRef();	\
 }	\
@@ -26,10 +26,10 @@ if(nullptr != (X))	\
 
 #define UNREF(X) \
 do{\
-if (nullptr != (X) && (X)->DecRef() <= 0)	\
+if (NULL != (X) && (X)->DecRef() <= 0)	\
 {	\
 DODELETE(X);	\
-X = nullptr;	\
+X = NULL;	\
 }\
 }while(0)
 #endif

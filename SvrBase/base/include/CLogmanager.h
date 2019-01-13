@@ -23,18 +23,20 @@ enum LogLevel{
 
 typedef void(*log_cb)(int iLevel, const char *pData);
 
+#pragma pack(1)
 struct tagLogItem
 {
 	int iLevel;
 	std::string strLog;
 };
+#pragma pack()
 
 class CLogmanger : public CSingleton<CLogmanger>
 {
 	SINGLE_CLASS_INITIAL(CLogmanger);
 
 public:
-	int Init(int iType, int iLevel, const char* szDir, log_cb pLogCb=nullptr);
+	int Init(int iType, int iLevel, const char* szDir, log_cb pLogCb=NULL);
 	~CLogmanger();
 	void AddLogItem(int iLevel, const char *format, ...);
 	int StopLog();

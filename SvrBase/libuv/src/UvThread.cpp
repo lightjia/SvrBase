@@ -10,9 +10,9 @@ CUvThread::~CUvThread(){
 }
 
 void CUvThread::ThreadEntry(void *pParam) {
-    if (nullptr != pParam) {
+    if (NULL != pParam) {
         CUvThread* pUvThread = reinterpret_cast<CUvThread*>(pParam);
-        if (nullptr != pUvThread) {
+        if (NULL != pUvThread) {
             pUvThread->m_bInit = true;
             pUvThread->OnThreadRun();
             pUvThread->OnThreadQuit();

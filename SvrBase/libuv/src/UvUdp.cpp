@@ -1,12 +1,12 @@
 #include "UvUdp.h"
 
 CUvUdp::CUvUdp(){
-    mpUdp = nullptr;
+    mpUdp = NULL;
 }
 
 CUvUdp::~CUvUdp(){
     if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
-        uv_close((uv_handle_t*)&mstUvSendAsync, nullptr);
+        uv_close((uv_handle_t*)&mstUvSendAsync, NULL);
     }
 
     CleanSendQueue();
@@ -18,20 +18,20 @@ void CUvUdp::RecvCb(uv_udp_t* pHandle, ssize_t nRead, const uv_buf_t* pBuf, cons
     }
 
     CUvUdp* pUdpSvr = (CUvUdp*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pUdpSvr) {
+    if (NULL != pUdpSvr) {
         pUdpSvr->OnRecv(nRead, pBuf, pAddr, iFlag);
     }
 }
 
 void CUvUdp::NotifySend(uv_async_t* pHandle) {
     CUvUdp* pUdp = (CUvUdp*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pUdp) {
+    if (NULL != pUdp) {
         pUdp->DoSend();
     }
 }
 
 int CUvUdp::Send(char* pData, ssize_t iLen, std::string strIp, unsigned short uPort) {
-    ASSERT_RET_VALUE(nullptr != mpUdp && nullptr != mpUvLoop, 1);
+    ASSERT_RET_VALUE(NULL != mpUdp && NULL != mpUvLoop, 1);
 
     struct sockaddr_in stAddr;
     uv_ip4_addr(strIp.c_str(), uPort, &stAddr);
@@ -39,7 +39,7 @@ int CUvUdp::Send(char* pData, ssize_t iLen, std::string strIp, unsigned short uP
 }
 
 int CUvUdp::Send(char* pData, ssize_t iLen, const struct sockaddr* pAddr) {
-    ASSERT_RET_VALUE(nullptr != mpUdp && nullptr != mpUvLoop && nullptr != pAddr, 1);
+    ASSERT_RET_VALUE(NULL != mpUdp && NULL != mpUvLoop && NULL != pAddr, 1);
     tagUvUdpPkg stTmp;
     stTmp.stBuf.base = (char*)do_malloc(iLen);
     stTmp.stBuf.len = (unsigned long)iLen;
@@ -65,7 +65,7 @@ void CUvUdp::SendCb(uv_udp_send_t* pReq, int iStatus) {
     }
 
     CUvUdp* pUdp = (CUvUdp*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (nullptr != pUdp) {
+    if (NULL != pUdp) {
         pUdp->mcSendMutex.Lock();
         tagUvUdpPkg stTmp = pUdp->mqueSendBuf.front();
         DOFREE(stTmp.stBuf.base);
@@ -101,7 +101,7 @@ int CUvUdp::DoSend() {
 }
 
 int CUvUdp::Start() {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpUdp, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpUdp, 1);
     uv_udp_init(mpUvLoop, mpUdp);
     uv_handle_set_data((uv_handle_t*)mpUdp, (void*)this);
     if (musPort > 0) {
@@ -138,14 +138,14 @@ void CUvUdp::CleanSendQueue() {
 }
 
 int CUvUdp::Close() {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpUdp && !uv_is_closing((uv_handle_t*)mpUdp), 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpUdp && !uv_is_closing((uv_handle_t*)mpUdp), 1);
 	mcSendAsyncMutex.Lock();
 	if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
-		uv_close((uv_handle_t*)&mstUvSendAsync, nullptr);
+		uv_close((uv_handle_t*)&mstUvSendAsync, NULL);
 	}
 	mcSendAsyncMutex.UnLock();
 
-	uv_close((uv_handle_t*)mpUdp, nullptr);
+	uv_close((uv_handle_t*)mpUdp, NULL);
 	CleanSendQueue();
     return 0;
 }

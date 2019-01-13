@@ -4,7 +4,7 @@
 CIdle::CIdle()
 {
 #if (defined PLATFORM_WINDOWS)
-	mHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	mHandle = CreateEvent(NULL, FALSE, FALSE, NULL);
 #elif  (defined PLATFORM_LINUX)
 	pthread_condattr_t cond_attr;
 	pthread_condattr_init(&cond_attr);
@@ -16,7 +16,7 @@ CIdle::CIdle()
 CIdle::~CIdle()
 {
 #if (defined PLATFORM_WINDOWS)
-	if (nullptr != mHandle)
+	if (NULL != mHandle)
 	{
 		CloseHandle(mHandle);
 	}
@@ -28,7 +28,7 @@ CIdle::~CIdle()
 void CIdle::Sleep(unsigned long iTime)
 {
 #if (defined PLATFORM_WINDOWS)
-	if (nullptr != mHandle)
+	if (NULL != mHandle)
 	{
 		WaitForSingleObject(mHandle, iTime);
 	}
@@ -39,7 +39,7 @@ void CIdle::Sleep(unsigned long iTime)
 		cTemp.Lock();
 		timespec ts;
 		struct timeval tv;
-		gettimeofday(&tv, nullptr);
+		gettimeofday(&tv, NULL);
 		int64_t usec = tv.tv_usec + iTime * 1000LL;
 		ts.tv_sec = tv.tv_sec + usec / 1000000;
 		ts.tv_nsec = (usec % 1000000) * 1000;
@@ -52,7 +52,7 @@ void CIdle::Sleep(unsigned long iTime)
 void CIdle::Activate()
 {
 #if (defined PLATFORM_WINDOWS)
-	if (nullptr != mHandle)
+	if (NULL != mHandle)
 	{
 		SetEvent(mHandle);
 	}

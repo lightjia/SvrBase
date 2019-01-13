@@ -52,9 +52,11 @@ struct systemtime_t
 	int tmmilliseconds;/*milliseconds after the sec[0,1000]*/
 };
 
+#pragma pack(1)
 struct len_str
 {
 	unsigned char* pStr;
 	size_t iLen;
 };
+#pragma pack()
 #endif

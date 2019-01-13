@@ -5,7 +5,7 @@ CMutex::CMutex()
 #if (defined PLATFORM_WINDOWS)
 	InitializeCriticalSection(&mCs);
 #elif  (defined PLATFORM_LINUX)
-	pthread_mutex_init(&mmutex, nullptr);
+	pthread_mutex_init(&mmutex, NULL);
 #endif
 }
 

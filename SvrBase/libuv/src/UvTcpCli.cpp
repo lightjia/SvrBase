@@ -1,10 +1,8 @@
 #include "UvTcpCli.h"
 
 CUvTcpCli::CUvTcpCli(){
-    mpTcpCli = nullptr;
-    mpUvConn = nullptr;
-    memset(&mstUvWriteReq, 0, sizeof(mstUvWriteReq));
-    memset(&mstWriteBuf, 0, sizeof(mstWriteBuf));
+    mpTcpCli = NULL;
+    mpUvConn = NULL;
 }
 
 CUvTcpCli::~CUvTcpCli(){
@@ -13,7 +11,7 @@ CUvTcpCli::~CUvTcpCli(){
 
 void CUvTcpCli::RecvCb(uv_stream_t* pHandle, ssize_t nRead, const uv_buf_t* pBuf){
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pTcpCli){
+    if (NULL != pTcpCli){
         if (nRead == 0){
             if (uv_is_closing((uv_handle_t*)pTcpCli->mpTcpCli)){
                 LOG_ERR("Cli is Closed!");
@@ -32,7 +30,7 @@ void CUvTcpCli::RecvCb(uv_stream_t* pHandle, ssize_t nRead, const uv_buf_t* pBuf
 }
 
 void CUvTcpCli::ParseIpPort() {
-    ASSERT_RET(nullptr != mpTcpCli);
+    ASSERT_RET(NULL != mpTcpCli);
     struct sockaddr stSock;
     int iSockNameLen = (int)sizeof(stSock);
     uv_tcp_getpeername(mpTcpCli, &stSock, &iSockNameLen);
@@ -50,7 +48,7 @@ void CUvTcpCli::ParseIpPort() {
 }
 
 void CUvTcpCli::SetTcpCli(uv_tcp_t* pTcpCli) {
-    ASSERT_RET(nullptr != mpUvLoop);
+    ASSERT_RET(NULL != mpUvLoop);
     mpTcpCli = pTcpCli;
     ParseIpPort();
     uv_handle_set_data((uv_handle_t*)mpTcpCli, (void*)this);
@@ -69,7 +67,7 @@ int CUvTcpCli::AfterConn() {
 
 void CUvTcpCli::ConnCb(uv_connect_t* pReq, int iStatus){
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (nullptr != pTcpCli){
+    if (NULL != pTcpCli){
         if (iStatus >= 0) {
             pTcpCli->AfterConn();
         }
@@ -80,9 +78,7 @@ void CUvTcpCli::ConnCb(uv_connect_t* pReq, int iStatus){
 }
 
 int CUvTcpCli::Connect(std::string strIp, unsigned short sPort){
-    if (nullptr == mpTcpCli || nullptr == mpUvLoop || nullptr == mpUvConn){
-        return 1;
-    }
+    ASSERT_RET_VALUE(mpTcpCli && mpUvLoop && mpUvConn, 1);
 
     uv_handle_set_data((uv_handle_t*)mpTcpCli, (void*)this);
     uv_tcp_init(mpUvLoop, mpTcpCli);
@@ -101,7 +97,7 @@ int CUvTcpCli::Connect(std::string strIp, unsigned short sPort){
 }
 
 int CUvTcpCli::Recv() {
-    if (nullptr == mpTcpCli || nullptr == mpUvLoop) {
+    if (NULL == mpTcpCli || NULL == mpUvLoop) {
         return 1;
     }
 
@@ -112,15 +108,19 @@ int CUvTcpCli::Recv() {
 
 void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (nullptr != pTcpCli)
+    if (NULL != pTcpCli)
     {
-        pTcpCli->mcSendMutex.Lock();
-        if (!pTcpCli->mqueSendBuf.empty()) {
-            uv_buf_t stTmp = pTcpCli->mqueSendBuf.front();
-            DOFREE(stTmp.base);
-            pTcpCli->mqueSendBuf.pop();
+        std::map<uv_write_t*, uv_buf_t*>::iterator iter = pTcpCli->mmapSend.find(pReq);
+        if (iter != pTcpCli->mmapSend.end()) {
+            uv_write_t* pWriteReq = iter->first;
+            DOFREE(pWriteReq);
+            uv_buf_t* pBuf = iter->second;
+            DOFREE(pBuf->base);
+            DOFREE(pBuf);
+            pTcpCli->mmapSend.erase(iter);
+        } else {
+            LOG_ERR("Can Not Find The WriteReq");
         }
-        pTcpCli->mcSendMutex.UnLock();
 
         pTcpCli->OnSend(iStatus);
         if (iStatus) {
@@ -140,37 +140,39 @@ void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
 
 void CUvTcpCli::NotifySend(uv_async_t* pHandle){
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pTcpCli){
+    if (NULL != pTcpCli){
         pTcpCli->DoSend();
     }
 }
 
 int CUvTcpCli::DoSend() {
-	if (uv_is_closing((uv_handle_t*)&mpTcpCli) || uv_is_active((uv_handle_t*)&mstUvWriteReq)) {
+	if (uv_is_closing((uv_handle_t*)&mpTcpCli)) {
 		return 0;
 	}
 
-    memset(&mstWriteBuf, 0, sizeof(mstWriteBuf));
+    uv_buf_t* pBuf = NULL;
     mcSendMutex.Lock();
     if (!mqueSendBuf.empty()) {
         uv_buf_t stTmp = mqueSendBuf.front();
-        mstWriteBuf.base = stTmp.base;
-        mstWriteBuf.len = stTmp.len;
+        mqueSendBuf.pop();
+        pBuf = (uv_buf_t*)do_malloc(sizeof(uv_buf_t));
+        pBuf->base = stTmp.base;
+        pBuf->len = stTmp.len;
     }
     mcSendMutex.UnLock();
     
-    if (mstWriteBuf.len <= 0) {
-        return 0;
+    if (!pBuf) {
+        return 1;
     }
 
-    uv_handle_set_data((uv_handle_t*)&mstUvWriteReq, (void*)this);
-    return uv_write(&mstUvWriteReq, (uv_stream_t*)mpTcpCli, &mstWriteBuf, 1, CUvTcpCli::SendCb);
+    uv_write_t* pWriteReq = (uv_write_t*)do_malloc(sizeof(uv_write_t));
+    uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
+    mmapSend.insert(std::make_pair(pWriteReq, pBuf));
+    return uv_write(pWriteReq, (uv_stream_t*)mpTcpCli, pBuf, 1, CUvTcpCli::SendCb);
 }
 
 int CUvTcpCli::Send(char* pData, ssize_t iLen){
-    if (nullptr == pData || iLen <= 0 || nullptr == mpTcpCli || nullptr == mpUvLoop || !uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
-        return 1;
-    }
+    ASSERT_RET_VALUE(pData && iLen > 0 && mpTcpCli && mpUvLoop && uv_is_active((uv_handle_t*)&mstUvSendAsync), 1);
 
     uv_buf_t stTmp;
     stTmp.base = (char*)do_malloc(iLen);
@@ -197,23 +199,31 @@ void CUvTcpCli::CleanSendQueue(){
         mqueSendBuf.pop();
     }
     mcSendMutex.UnLock();
+
+    while (!mmapSend.empty()) {
+        std::map<uv_write_t*, uv_buf_t*>::iterator iter = mmapSend.begin();
+        uv_write_t* pWriteReq = iter->first;
+        DOFREE(pWriteReq);
+        uv_buf_t* pBuf = iter->second;
+        DOFREE(pBuf->base);
+        DOFREE(pBuf);
+        mmapSend.erase(iter);
+    }
 }
 
 void CUvTcpCli::CloseCb(uv_handle_t* pHandle){
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pTcpCli){
+    if (NULL != pTcpCli){
         pTcpCli->OnClose();
     }
 }
 
 int CUvTcpCli::Close() {
-    if (nullptr == mpTcpCli || nullptr == mpUvLoop || uv_is_closing((uv_handle_t*)mpTcpCli) != 0) {
-        return 1;
-    }
+    ASSERT_RET_VALUE(mpTcpCli && mpUvLoop &&  !uv_is_closing((uv_handle_t*)mpTcpCli), 1);
 
     mcSendAsyncMutex.Lock();
     if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
-        uv_close((uv_handle_t*)&mstUvSendAsync, nullptr);
+        uv_close((uv_handle_t*)&mstUvSendAsync, NULL);
     }
     mcSendAsyncMutex.UnLock();
 

@@ -1,7 +1,7 @@
 #include "UvTcpSvr.h"
 
 CUvTcpSvr::CUvTcpSvr(){
-    mpTcpSvr = nullptr;
+    mpTcpSvr = NULL;
 }
 
 CUvTcpSvr::~CUvTcpSvr(){
@@ -16,14 +16,14 @@ uv_tcp_t* CUvTcpSvr::AllocTcpCli() {
 
 void CUvTcpSvr::ConnCb(uv_stream_t* pHandle, int iStatus){
     CUvTcpSvr* pTcpSvr = (CUvTcpSvr*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pTcpSvr){
+    if (NULL != pTcpSvr){
         if (iStatus){
             LOG_ERR("uv_conn error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
             return;
         }
 
         uv_tcp_t* pTcpCli = pTcpSvr->AllocTcpCli();
-        ASSERT_RET(nullptr != pTcpCli);
+        ASSERT_RET(NULL != pTcpCli);
         int iRet = uv_accept((uv_stream_t*)pTcpSvr->mpTcpSvr, (uv_stream_t*)pTcpCli);
         if (iRet){
             LOG_ERR("uv_accept error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
@@ -37,9 +37,7 @@ void CUvTcpSvr::ConnCb(uv_stream_t* pHandle, int iStatus){
 }
 
 int CUvTcpSvr::Listen(int iBackLog){
-    if (nullptr == mpUvLoop || nullptr == mpTcpSvr){
-        return 1;
-    }
+    ASSERT_RET_VALUE(mpUvLoop && mpTcpSvr, 1);
 
     uv_handle_set_data((uv_handle_t*)mpTcpSvr, (void*)this);
     uv_tcp_init(mpUvLoop, mpTcpSvr);

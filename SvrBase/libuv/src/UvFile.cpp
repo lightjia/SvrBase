@@ -1,7 +1,7 @@
 #include "UvFile.h"
 
 CUvFile::CUvFile(){
-    mpFsReq = nullptr;
+    mpFsReq = NULL;
 }
 
 CUvFile::~CUvFile(){
@@ -156,7 +156,7 @@ int CUvFile::OnCopyFile(uv_fs_t* pFileReq) {
 
 void CUvFile::FsOperCb(uv_fs_t* pFileReq) {
     CUvFile* pUvFile = (CUvFile*)uv_handle_get_data((uv_handle_t*)pFileReq);
-    if (nullptr != pUvFile) {
+    if (NULL != pUvFile) {
         switch (uv_fs_get_type(pFileReq)){
         case UV_FS_CUSTOM:
             pUvFile->OnCustom(pFileReq);
@@ -252,14 +252,14 @@ void CUvFile::FsOperCb(uv_fs_t* pFileReq) {
 }
 
 int CUvFile::Open(std::string strFileName, int iFlags, int iMode) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_open(mpUvLoop, mpFsReq, strFileName.c_str(), iFlags, iMode, CUvFile::FsOperCb);
 }
 
 int CUvFile::Read(uv_file file, char* pData, unsigned int iDataLen, int64_t iOffset) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq && pData != nullptr && iDataLen > 0, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq && pData != NULL && iDataLen > 0, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     uv_buf_t stBuf = uv_buf_init(pData, iDataLen);
@@ -268,7 +268,7 @@ int CUvFile::Read(uv_file file, char* pData, unsigned int iDataLen, int64_t iOff
 }
 
 int CUvFile::Write(uv_file file, char* pData, unsigned int iDataLen, int64_t iOffset) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq && pData != nullptr && iDataLen > 0, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq && pData != NULL && iDataLen > 0, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     uv_buf_t stBuf = uv_buf_init(pData, iDataLen);
@@ -277,140 +277,140 @@ int CUvFile::Write(uv_file file, char* pData, unsigned int iDataLen, int64_t iOf
 }
 
 int CUvFile::Close(uv_file file) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_close(mpUvLoop, mpFsReq, file, CUvFile::FsOperCb);
 }
 
 int CUvFile::Unlink(std::string strFilePath) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_unlink(mpUvLoop, mpFsReq, strFilePath.c_str(), CUvFile::FsOperCb);
 }
 
 int CUvFile::CopyFile(std::string strNewFileName, std::string strOldFileName, int iFlags) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_copyfile(mpUvLoop, mpFsReq, strOldFileName.c_str(), strNewFileName.c_str(), iFlags, CUvFile::FsOperCb);
 }
 
 int CUvFile::Mkdir(std::string strFilePath, int iMode) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_mkdir(mpUvLoop, mpFsReq, strFilePath.c_str(), iMode, CUvFile::FsOperCb);
 }
 
 int CUvFile::Mkdtemp(std::string strFilePath) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_mkdtemp(mpUvLoop, mpFsReq, strFilePath.c_str(), CUvFile::FsOperCb);
 }
 
 int CUvFile::RmDir(std::string strFilePath) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_rmdir(mpUvLoop, mpFsReq, strFilePath.c_str(), CUvFile::FsOperCb);
 }
 
 int CUvFile::ScanDir(std::string strFilePath, int iFlags) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_scandir(mpUvLoop, mpFsReq, strFilePath.c_str(), iFlags, CUvFile::FsOperCb);
 }
 
 int CUvFile::Stat(std::string strFilePath) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_stat(mpUvLoop, mpFsReq, strFilePath.c_str(), CUvFile::FsOperCb);
 }
 
 int CUvFile::Fstat(uv_file file) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_fstat(mpUvLoop, mpFsReq, file, CUvFile::FsOperCb);
 }
 
 int CUvFile::Rename(std::string strNewFileName, std::string strOldFileName) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_rename(mpUvLoop, mpFsReq, strOldFileName.c_str(), strNewFileName.c_str(), CUvFile::FsOperCb);
 }
 
 int CUvFile::Fsync(uv_file file) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_fsync(mpUvLoop, mpFsReq, file, CUvFile::FsOperCb);
 }
 
 int CUvFile::FdataSync(uv_file file) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_fdatasync(mpUvLoop, mpFsReq, file, CUvFile::FsOperCb);
 }
 
 int CUvFile::Ftruncate(uv_file file, int64_t iOffset) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_ftruncate(mpUvLoop, mpFsReq, file, iOffset, CUvFile::FsOperCb);
 }
 
 int CUvFile::SendFile(uv_file out_fd, uv_file in_fd, int64_t in_offset, size_t length) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_sendfile(mpUvLoop, mpFsReq, out_fd, in_fd, in_offset, length, CUvFile::FsOperCb);
 }
 
 int CUvFile::Access(std::string strFilePath, int iMode) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_access(mpUvLoop, mpFsReq, strFilePath.c_str(), iMode, CUvFile::FsOperCb);
 }
 
 int CUvFile::Chmod(std::string strFilePath, int iMode) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_chmod(mpUvLoop, mpFsReq, strFilePath.c_str(), iMode, CUvFile::FsOperCb);
 }
 
 int CUvFile::Utime(std::string strFilePath, double atime, double mtime) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_utime(mpUvLoop, mpFsReq, strFilePath.c_str(), atime, mtime, CUvFile::FsOperCb);
 }
 
 int CUvFile::FuTime(uv_file file, double atime, double mtime) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_futime(mpUvLoop, mpFsReq, file, atime, mtime, CUvFile::FsOperCb);
 }
 
 int CUvFile::Lstat(std::string strFilePath) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_lstat(mpUvLoop, mpFsReq, strFilePath.c_str(), CUvFile::FsOperCb);
 }
 
 int CUvFile::Link(std::string strNewFileName, std::string strOldFileName) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != mpFsReq, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != mpFsReq, 1);
     uv_fs_req_cleanup(mpFsReq);
     uv_handle_set_data((uv_handle_t*)mpFsReq, (void*)this);
     return uv_fs_link(mpUvLoop, mpFsReq, strOldFileName.c_str(), strNewFileName.c_str(), CUvFile::FsOperCb);

@@ -5,8 +5,8 @@
 #include "LocalDefine.h"
 
 //mem
-#define DOFREE(X) do{if(nullptr != X) {free(X); X = nullptr;}}while(0)
-#define DODELETE(X) do{if(nullptr != X) {delete X; X = nullptr;}}while(0)
+#define DOFREE(X) do{if(NULL != X) {free(X); X = NULL;}}while(0)
+#define DODELETE(X) do{if(NULL != X) {delete X; X = NULL;}}while(0)
 #define BZERO(X) memset(&X, 0, sizeof(X))
 void* do_malloc(size_t iLen);
 
@@ -21,7 +21,6 @@ long atomic_change(volatile long* value, int off);
 
 //strings
 bool str_cmp(const char* pStr1, const char* pStr2, bool bIgnoreCase);
-int safe_snprintf(char * _DstBuf, size_t _SizeInBytes, size_t _MaxCount, const char * _Format, ...);
 bool str_start_with(const std::string& str, const std::string& prefix);
 bool str_end_with(const std::string& str, const std::string& suffix);
 bool str_cmp_nocase(std::string str1, std::string str2);
@@ -46,7 +45,6 @@ bool file_exits(const char*  strFileName);
 bool directory_exists(const char* strDirectory);
 int make_dir(const char* path);	//创建目录
 int make_dirs(const char* path);	//创建多层目录
-const char* get_flietype(const char *pFileName);
 int rm_file(const char* pFileName);
 int rm_dir(const char* pDirName);
 

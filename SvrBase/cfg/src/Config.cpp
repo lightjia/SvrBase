@@ -8,7 +8,7 @@ CConfig::~CConfig(){
 }
 
 int CConfig::LoadJsonConf(const char* pData){
-	if (nullptr == pData){
+	if (NULL == pData){
 		return 1;
 	}
 

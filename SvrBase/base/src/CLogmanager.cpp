@@ -31,39 +31,40 @@ CLogmanger::CLogmanger()
 	mstrDir = "";
 	mbInit = false;
 	mpFile = stdout;
-	mpTmpFile = nullptr;
-  mpLogCb = nullptr;
+	mpTmpFile = NULL;
+    mpLogCb = NULL;
 }
 
 CLogmanger::~CLogmanger()
 {
-	if (nullptr != mpFile)
+	if (NULL != mpFile)
 	{
 		fclose(mpFile);
-		mpFile = nullptr;
+		mpFile = NULL;
 	}
 
-	if (nullptr != mpTmpFile)
+	if (NULL != mpTmpFile)
 	{
 		fclose(mpTmpFile);
-		mpTmpFile = nullptr;
+		mpTmpFile = NULL;
 	}
 }
 
 FILE* CLogmanger::GetFile()
 {
-	if (mpTmpFile != nullptr  && mpTmpFile != stdout)
+	if (mpTmpFile != NULL  && mpTmpFile != stdout)
 	{
 		fclose(mpTmpFile);
-		mpTmpFile = nullptr;
+		mpTmpFile = NULL;
 	}
 
 	mpTmpFile = mpFile;
+    FILE* pTmpTile = stdout;
 	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE)
 	{
 		struct systemtime_t stNow = get_now_time();
 		char szFileName[1000];
-		safe_snprintf(szFileName, 1000, _TRUNCATE, "%02d-%02d-%02d-%02d-%02d-%02d.log", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec);
+		snprintf(szFileName, 1000, "%02d-%02d-%02d-%02d-%02d-%02d.log", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec);
 		std::string strTmp = mstrDir;
 		if (!str_end_with(strTmp, "\\") && !str_end_with(strTmp, "/"))
 		{
@@ -71,22 +72,15 @@ FILE* CLogmanger::GetFile()
 		}
 
 		strTmp += szFileName;
-		FILE* pTmpTile = safe_open_file(strTmp.c_str(), "a+");
-		if (nullptr == pTmpTile)
+		pTmpTile = safe_open_file(strTmp.c_str(), "a+");
+		if (NULL == pTmpTile)
 		{
 			fprintf(stderr, "open  log file err:%s", strTmp.c_str());
-			mpFile = stdout;
+            pTmpTile = stdout;
 		}
-		else
-		{
-			mpFile = pTmpTile;
-		}
-	}
-	else
-	{
-		mpFile = stdout;
 	}
 	
+    mpFile = pTmpTile;
 	return mpFile;
 }
 
@@ -142,7 +136,7 @@ int CLogmanger::SetLogLevel(int iLevel)
 
 int CLogmanger::SetLogPath(const char* pPath)
 {
-	if (!mbInit || nullptr == pPath || str_cmp(pPath, mstrDir.c_str(), true))
+	if (!mbInit || NULL == pPath || str_cmp(pPath, mstrDir.c_str(), true))
 	{
 		return 1;
 	}
@@ -154,33 +148,6 @@ int CLogmanger::SetLogPath(const char* pPath)
 
 void CLogmanger::AddLogItem(int iLevel, const char *format, ...)
 {
-  if (nullptr != mpLogCb)
-  {
-    va_list arg;
-    va_start(arg, format);
-    int nPos = 0;
-    char szBuf[MAX_PER_LINE_LOG];
-#if (defined PLATFORM_WINDOWS)
-    nPos += vsnprintf_s(szBuf + nPos, MAX_PER_LINE_LOG - nPos - 1, _TRUNCATE, format, arg);
-#elif  (defined PLATFORM_LINUX)
-    nPos += vsnprintf(szBuf + nPos, MAX_PER_LINE_LOG - nPos - 1, format, arg);
-#endif
-
-    if (nPos > MAX_PER_LINE_LOG - 1)
-    {
-      nPos = MAX_PER_LINE_LOG - 1;
-    }
-
-    if (nPos > 0)
-    {
-      szBuf[nPos] = '\0';
-    }
-
-    va_end(arg);
-    mpLogCb(iLevel, szBuf);
-    return;
-  }
-
 	if (iLevel > miLevel || iLevel > LOG_LEVEL_MAX || !mbInit)
 	{
 		return;
@@ -192,27 +159,21 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...)
 	if (iLevel <= LOG_LEVEL_INFO)
 	{
 		struct systemtime_t stNow = get_now_time();
-		nPos = safe_snprintf(szBuf, MAX_PER_LINE_LOG - 1, _TRUNCATE, "[%02d/%02d/%02d %02d:%02d:%02d.%06d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
+		nPos = snprintf(szBuf, MAX_PER_LINE_LOG, "[%02d/%02d/%02d %02d:%02d:%02d.%06d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
 	}
 	
 	va_list ap;
 	va_start(ap, format);
 #if (defined PLATFORM_WINDOWS)
-	nPos += vsnprintf_s(szBuf + nPos, MAX_PER_LINE_LOG - nPos - 1, _TRUNCATE, format, ap);
+	nPos += vsnprintf_s(szBuf + nPos, MAX_PER_LINE_LOG - nPos, _TRUNCATE, format, ap);
 #elif  (defined PLATFORM_LINUX)
-	nPos += vsnprintf(szBuf + nPos, MAX_PER_LINE_LOG - nPos - 1, format, ap);
+	nPos += vsnprintf(szBuf + nPos, MAX_PER_LINE_LOG - nPos, format, ap);
 #endif
 	va_end(ap);
 
-	if (nPos > MAX_PER_LINE_LOG - 1)
-	{
-		nPos = MAX_PER_LINE_LOG - 1;
-	}
-		
-	if (nPos > 0)
-	{
-		szBuf[nPos] = '\0';
-	}
+    if (mpLogCb) {
+        mpLogCb(iLevel, szBuf);
+    }
 
 	tagLogItem stLog;
 	stLog.iLevel = iLevel;
@@ -222,7 +183,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...)
 
 int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb)
 {
-  if (nullptr != pLogCb)
+  if (NULL != pLogCb)
   {
     mpLogCb = pLogCb;
     return 0;
@@ -235,7 +196,7 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb)
 
 	miType = iType;
 	miLevel = iLevel;
-	if (nullptr != szDir && strlen(szDir) > 0 && !str_cmp(szDir, ".", true))
+	if (NULL != szDir && strlen(szDir) > 0 && !str_cmp(szDir, ".", true))
 	{
 		mstrDir = szDir;
 	}
@@ -252,7 +213,7 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb)
 	
 	GetFile();
 
-	if (nullptr == mpFile)
+	if (NULL == mpFile)
 	{
 		return 1;
 	}

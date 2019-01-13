@@ -7,12 +7,12 @@ CUvLoopMgr::~CUvLoopMgr(){
 }
 
 int CUvLoopMgr::AddUvBase(CUvBase* pUvBase) {
-    ASSERT_RET_VALUE(nullptr != pUvBase, 1);
+    ASSERT_RET_VALUE(NULL != pUvBase, 1);
     bool bFlag = false;
     mcVecUvLoopMuex.Lock();
     for (std::vector<CUvLoop*>::iterator iter = mvecUvLoop.begin(); iter != mvecUvLoop.end(); ++iter) {
         CUvLoop* pUvLoop = *iter;
-        if (nullptr != pUvLoop && pUvLoop->PushUvBase(pUvBase) == 0) {
+        if (NULL != pUvLoop && pUvLoop->PushUvBase(pUvBase) == 0) {
             bFlag = true;
             break;
         }
@@ -21,7 +21,7 @@ int CUvLoopMgr::AddUvBase(CUvBase* pUvBase) {
 
     if (!bFlag) {
         CUvLoop* pUvLoop = new CUvLoop();
-        if (nullptr != pUvLoop) {
+        if (NULL != pUvLoop) {
             if (0 == pUvLoop->Init()) {
                 pUvLoop->PushUvBase(pUvBase);
 

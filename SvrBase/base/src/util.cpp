@@ -5,11 +5,11 @@ void* do_malloc(size_t iLen)
 {
 	if (iLen <= 0)
 	{
-		return nullptr;
+		return NULL;
 	}
 
-	void* pRet = nullptr;
-	while (nullptr == pRet)
+	void* pRet = NULL;
+	while (NULL == pRet)
 	{
 		pRet = malloc(iLen);
 	}
@@ -24,31 +24,6 @@ void* do_malloc(size_t iLen)
 	return pRet;
 }
 
-const char* get_flietype(const char *pFileName)
-{
-	int n = (int)strlen(pFileName);
-
-	if (n < 5)
-		return nullptr;
-
-	if (!strcmp(&pFileName[n - 4], ".ico"))
-		return "image/x-icon";
-
-	if (!strcmp(&pFileName[n - 4], ".png"))
-		return "image/png";
-
-	if (!strcmp(&pFileName[n - 5], ".html"))
-		return "text/html";
-
-	if (!strcmp(&pFileName[n - 4], ".css"))
-		return "text/css";
-
-	if (!strcmp(&pFileName[n - 3], ".js"))
-		return "text/javascript";
-
-	return nullptr;
-}
-
 uint64_t get_time_ms()
 {
 	uint64_t iRet = 0;
@@ -56,7 +31,7 @@ uint64_t get_time_ms()
 	iRet = GetTickCount();
 #elif  (defined PLATFORM_LINUX)
 	struct timeval current;
-	gettimeofday(&current, nullptr);
+	gettimeofday(&current, NULL);
 	iRet = (uint64_t)(current.tv_sec * 1000) + current.tv_usec/1000;
 #endif
 
@@ -85,7 +60,7 @@ struct systemtime_t get_now_time()
 	stRet.tmmilliseconds = tp.millitm;
 #elif  (defined PLATFORM_LINUX)
 	struct timeval tv_now;
-	gettimeofday(&tv_now, nullptr);
+	gettimeofday(&tv_now, NULL);
 	rawtime = (time_t)tv_now.tv_sec;
 	
 	localtime_r(&rawtime, &tmnow);
@@ -120,7 +95,7 @@ DWORD get_thread_id_self()
 long atomic_change(volatile long* value, int off)
 {
   long lRet = 0;
-	if (nullptr != value)
+	if (NULL != value)
 	{
 #if (defined PLATFORM_WINDOWS)
     lRet = InterlockedExchangeAdd(value, off);
@@ -158,7 +133,7 @@ bool str_cmp(const char* pStr1, const char* pStr2, bool bIgnoreCase)
 		return true;
 	}
 
-	if (nullptr == pStr1 || nullptr == pStr2)
+	if (NULL == pStr1 || NULL == pStr2)
 	{
 		return false;
 	}
@@ -186,20 +161,6 @@ bool str_cmp(const char* pStr1, const char* pStr2, bool bIgnoreCase)
 	}
 
 	return true;
-}
-
-int safe_snprintf(char * _DstBuf, size_t _SizeInBytes, size_t _MaxCount, const char * _Format, ...)
-{
-	int iRet = 0;
-	va_list ap;
-	va_start(ap, _Format);
-#if (defined PLATFORM_WINDOWS)
-	iRet = vsnprintf_s(_DstBuf, _SizeInBytes, _MaxCount, _Format, ap);
-#elif  (defined PLATFORM_LINUX)
-	iRet = vsnprintf(_DstBuf, _MaxCount, _Format, ap);
-#endif
-	va_end(ap);
-	return iRet;
 }
 
 bool str_start_with(const std::string& str, const std::string& prefix)
@@ -272,8 +233,8 @@ bool str_cmp_nocase(std::string str1, std::string str2)
 
 wchar_t* char_2_wchar(const char* pStr)
 {
-	wchar_t* pRet = nullptr;
-	if (nullptr != pStr)
+	wchar_t* pRet = NULL;
+	if (NULL != pStr)
 	{
 		size_t iLen = strlen(pStr);
 		if (iLen > 0)
@@ -281,7 +242,7 @@ wchar_t* char_2_wchar(const char* pStr)
 			iLen += 1;
 			fprintf(stderr, "char_2_wchar malloc\n");
 			pRet = (wchar_t*)do_malloc(iLen * sizeof(wchar_t));
-			if (nullptr != pRet)
+			if (NULL != pRet)
 			{
 #if (defined PLATFORM_WINDOWS)
 				size_t converted = 0;
@@ -298,8 +259,8 @@ wchar_t* char_2_wchar(const char* pStr)
 
 char* wchar_2_char(const wchar_t* pStr)
 {
-	char* pRet = nullptr;
-	if (nullptr != pStr)
+	char* pRet = NULL;
+	if (NULL != pStr)
 	{
 		size_t iLen = wcslen(pStr);
 		if (iLen > 0)
@@ -307,7 +268,7 @@ char* wchar_2_char(const wchar_t* pStr)
 			iLen += 1;
 			fprintf(stderr, "wchar_2_char malloc\n");
 			pRet = (char*)do_malloc(iLen * sizeof(char));
-			if (nullptr != pRet)
+			if (NULL != pRet)
 			{
 #if (defined PLATFORM_WINDOWS)
 				size_t converted = 0;
@@ -326,7 +287,7 @@ const long get_file_len(const char* pFileName, const char* pMode)
 {
 	long lRet = 0;
 	FILE *pFile = safe_open_file(pFileName, pMode);
-	if (nullptr != pFile)
+	if (NULL != pFile)
 	{
 		fseek(pFile, 0L, SEEK_END);
 		lRet = ftell(pFile);
@@ -341,13 +302,13 @@ size_t file_write(const char* pFileName, const char* pMode, const unsigned char*
 	size_t iWrite = 0;
 	do
 	{
-		if (nullptr == pData || iLen <= 0)
+		if (NULL == pData || iLen <= 0)
 		{
 			break;
 		}
 
 		FILE *pFile = safe_open_file(pFileName, pMode);
-		if (nullptr != pFile)
+		if (NULL != pFile)
 		{
 			while (iWrite < iLen)
 			{
@@ -365,13 +326,13 @@ size_t file_read(const char* pFileName, const char* pMode, unsigned char* pData,
 	size_t iRead = 0;
 	do
 	{
-		if (nullptr == pData || iLen <= 0)
+		if (NULL == pData || iLen <= 0)
 		{
 			break;
 		}
 
 		FILE *pFile = safe_open_file(pFileName, pMode);
-		if (nullptr != pFile)
+		if (NULL != pFile)
 		{
 			if (fseek(pFile, lOffset, SEEK_SET) != 0)
 			{
@@ -391,15 +352,15 @@ size_t file_read(const char* pFileName, const char* pMode, unsigned char* pData,
 
 char* file_read(const char* pFileName, const char* pMode, size_t& lLen)
 {
-	char* pRet = nullptr;
+	char* pRet = NULL;
 	lLen = get_file_len(pFileName, pMode);
 	if (lLen > 0)
 	{
 		pRet = (char*)do_malloc(lLen);
-		if (pRet != nullptr)
+		if (pRet != NULL)
 		{
 			FILE *pFile = safe_open_file(pFileName, pMode);
-			if (nullptr != pFile)
+			if (NULL != pFile)
 			{
 				size_t iRead = 0;
 				while (iRead < lLen && !feof(pFile))
@@ -444,7 +405,7 @@ std::string get_app_path()
 	std::string strRet = "";
 #if (defined PLATFORM_WINDOWS)
 	char szExePath[MAX_PATH] = { 0 };
-	GetModuleFileNameA(nullptr, szExePath, MAX_PATH);
+	GetModuleFileNameA(NULL, szExePath, MAX_PATH);
 	char *pstr = strrchr(szExePath, '\\');
 	memset(pstr + 1, '\0', 1);
 	strRet = szExePath;
@@ -473,11 +434,11 @@ std::string get_app_path()
 
 FILE* safe_open_file(const char* pFileName, const char* pMode)
 {
-	FILE* pRet = nullptr;
+	FILE* pRet = NULL;
 #if (defined PLATFORM_WINDOWS)
 	/*if (0 != fopen_s(&pRet, pFileName, pMode))
 	{
-		pRet = nullptr;
+		pRet = NULL;
 	}*/
 	//fopen_s(&pRet,pFileName, pMode);
     pRet = fopen(pFileName, pMode);
@@ -486,9 +447,9 @@ FILE* safe_open_file(const char* pFileName, const char* pMode)
 #endif
 
 	//设置非缓冲
-	if (nullptr != pRet)
+	if (NULL != pRet)
 	{
-		setvbuf(pRet, nullptr, _IONBF, 0);
+		setvbuf(pRet, NULL, _IONBF, 0);
 	}
 
 	return pRet;
@@ -539,7 +500,7 @@ len_str get_bmp(const void* pBmp, int width, int height, int bitCount)
 {
 	len_str stImg;
 	memset(&stImg, 0, sizeof(len_str));
-	if (nullptr == pBmp)
+	if (NULL == pBmp)
 	{
 		return stImg;
 	}
@@ -557,7 +518,7 @@ len_str get_bmp(const void* pBmp, int width, int height, int bitCount)
 	stImg.iLen = bmpHeader.bfSize;
 	fprintf(stderr, "get_bmp malloc\n");
 	stImg.pStr = (unsigned char*)do_malloc(sizeof(unsigned char)*bmpHeader.bfSize);
-	if (nullptr == stImg.pStr)
+	if (NULL == stImg.pStr)
 	{
 		stImg.iLen = 0;
 		return stImg;
@@ -592,7 +553,7 @@ len_str get_bmp(const void* pBmp, int width, int height, int bitCount)
 
 int make_dir(const char* path)
 {
-	if (nullptr == path || strlen(path) <= 0)
+	if (NULL == path || strlen(path) <= 0)
 	{
 		return 1;
 	}
@@ -603,7 +564,7 @@ int make_dir(const char* path)
 	}
 
 #if (defined PLATFORM_WINDOWS)
-	if (!::CreateDirectoryA(path, nullptr))
+	if (!::CreateDirectoryA(path, NULL))
 	{
 		return 1;
 	}
@@ -621,19 +582,19 @@ int make_dir(const char* path)
 int make_dirs(const char* path)
 {
 	size_t len = 0;
-	if (nullptr == path || (len = strlen(path)) <= 0)
+	if (NULL == path || (len = strlen(path)) <= 0)
 	{
 		return 1;
 	}
 
 	fprintf(stderr, "make_dirs malloc\n");
 	char* pTmp = (char*)do_malloc(len + 3);
-	if (nullptr == pTmp)
+	if (NULL == pTmp)
 	{
 		return 1;
 	}
 
-	safe_snprintf(pTmp, len + 1, _TRUNCATE, "%s", path);
+	snprintf(pTmp, len + 1, "%s", path);
 
 	for (int i = 0; i < (int)len; i++) 
 	{
@@ -677,8 +638,8 @@ int init_platform()
 #endif
 
 	//输出非缓冲
-	setvbuf(stdout, nullptr, _IONBF, 0);
-	setvbuf(stderr, nullptr, _IONBF, 0);
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 	return iRet;
 }
 
@@ -696,22 +657,22 @@ void perror_desc(const char* pStr)
 {
 #if (defined PLATFORM_WINDOWS)
 	wchar_t* pWstr = char_2_wchar(pStr);
-	if (nullptr == pWstr)
+	if (NULL == pWstr)
 	{
 		return;
 	}
 
-	wchar_t* pBuf = nullptr;
+	wchar_t* pBuf = NULL;
 	if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
-		nullptr,
+		NULL,
 		GetLastError(),
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		pBuf,
 		0,
-		nullptr))
+		NULL))
 	{
 		wchar_t* pFormat = char_2_wchar("%s: %s");
-		if (nullptr != pFormat)
+		if (NULL != pFormat)
 		{
 			fwprintf_s(stderr, pFormat, pWstr, pBuf);
 			fflush(stderr);
@@ -722,7 +683,7 @@ void perror_desc(const char* pStr)
 	else
 	{
 		wchar_t* pFormat = char_2_wchar("%s: unknown Windows error\n");
-		if (nullptr != pFormat)
+		if (NULL != pFormat)
 		{
 			fwprintf_s(stderr, pFormat, pWstr);
 			fflush(stderr);
@@ -732,7 +693,7 @@ void perror_desc(const char* pStr)
 
 	DOFREE(pWstr);
 #elif  (defined PLATFORM_LINUX)
-	if (nullptr != pStr)
+	if (NULL != pStr)
 	{
 		perror(pStr);
 	}

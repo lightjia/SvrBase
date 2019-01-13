@@ -3,10 +3,12 @@
 #include "uv.h"
 
 #define UV_DEFAULT_BUF_SIZE 10240   //default 10KB buffer size
+#pragma pack(1)
 struct tagUvBuf {
     char* pBuf;
     ssize_t iLen;
     ssize_t iUse;
     ssize_t iTotal;
 };
+#pragma pack()
 #endif

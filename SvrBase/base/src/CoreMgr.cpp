@@ -24,7 +24,7 @@ void CCoreMgr::CreateDumpFile(LPCWSTR lpstrDumpFilePathName, EXCEPTION_POINTERS 
 LONG CCoreMgr::ApplicationCrashHandler(EXCEPTION_POINTERS *pException) {
     struct systemtime_t stNow = get_now_time();
     char szFileName[1000];
-    safe_snprintf(szFileName, 1000, _TRUNCATE, "%02d-%02d-%02d-%02d-%02d-%02d.dmp", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec);
+    snprintf(szFileName, 1000, "%02d-%02d-%02d-%02d-%02d-%02d.dmp", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec);
     CCoreMgr::CreateDumpFile(L"AnalySisSvr.dmp", pException);
     return EXCEPTION_EXECUTE_HANDLER;
 }

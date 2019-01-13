@@ -11,9 +11,9 @@ CUvLoop::CUvLoop(){
 }
 
 CUvLoop::~CUvLoop(){
-    if (nullptr != mpUvLoop) {
+    if (NULL != mpUvLoop) {
         uv_loop_close(mpUvLoop);
-        mpUvLoop = nullptr;
+        mpUvLoop = NULL;
     }
 }
 
@@ -26,13 +26,13 @@ int CUvLoop::OnInit() {
 
 void CUvLoop::AsyncCb(uv_async_t* pHandle) {
     CUvLoop* pUvLoop = (CUvLoop*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (nullptr != pUvLoop) {
+    if (NULL != pUvLoop) {
         pUvLoop->PopUvBase();
     }
 }
 
 void CUvLoop::PopUvBase() {
-    CUvBase* pUvBase = nullptr;
+    CUvBase* pUvBase = NULL;
    
     mcQueBaseMutex.Lock();
     if (!mqueUvBase.empty()) {
@@ -41,7 +41,7 @@ void CUvLoop::PopUvBase() {
     }
     mcQueBaseMutex.UnLock();
 
-    if (nullptr != pUvBase) {
+    if (NULL != pUvBase) {
         pUvBase->SetUvLoop(mpUvLoop);
         pUvBase->Init();
     }else {
@@ -54,7 +54,7 @@ void CUvLoop::PopUvBase() {
 }
 
 int CUvLoop::PushUvBase(CUvBase* pUvBase) {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop && nullptr != pUvBase && miBakFdNum <= MAX_UV_LOOP_BAK_FD, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop && NULL != pUvBase && miBakFdNum <= MAX_UV_LOOP_BAK_FD, 1);
     mcQueBaseMutex.Lock();
     mqueUvBase.push(pUvBase);
     mcQueBaseMutex.UnLock();
@@ -63,7 +63,7 @@ int CUvLoop::PushUvBase(CUvBase* pUvBase) {
 }
 
 int CUvLoop::OnThreadRun() {
-    ASSERT_RET_VALUE(nullptr != mpUvLoop, 1);
+    ASSERT_RET_VALUE(NULL != mpUvLoop, 1);
     
     //always run 
     return uv_run(mpUvLoop, UV_RUN_DEFAULT);

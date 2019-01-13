@@ -1,15 +1,29 @@
 #include "UvTaskPool.h"
 
 CUvTaskPool::CUvTaskPool(){
+    mbStart = false;
 }
 
 CUvTaskPool::~CUvTaskPool(){
 }
 
+int CUvTaskPool::Init() {
+    ASSERT_RET_VALUE(!mbStart, 1);
+    mbStart = true;
+
+    return Start();
+}
+
+int CUvTaskPool::UnInit() {
+    mbStart = false;
+
+    return 0;
+}
+
 int CUvTaskPool::OnThreadRun() {
     for (;;) {
         CTask* pTask = PopTask();
-        if (nullptr == pTask) {
+        if (NULL == pTask) {
             Wait();
             continue;
         }
@@ -20,7 +34,7 @@ int CUvTaskPool::OnThreadRun() {
 }
 
 CTask* CUvTaskPool::PopTask() {
-    CTask* pTask = nullptr;
+    CTask* pTask = NULL;
     mcQueTasksMutex.Lock();
     if (!mqueTasks.empty()) {
         pTask = mqueTasks.front();
@@ -32,7 +46,7 @@ CTask* CUvTaskPool::PopTask() {
 }
 
 int CUvTaskPool::PushTask(CTask* pTask) {
-    ASSERT_RET_VALUE(nullptr != pTask, 1);
+    ASSERT_RET_VALUE(NULL != pTask && mbStart, 1);
     mcQueTasksMutex.Lock();
     mqueTasks.push(pTask);
     mcQueTasksMutex.UnLock();
@@ -42,7 +56,7 @@ int CUvTaskPool::PushTask(CTask* pTask) {
 }
 
 int CUvTaskPool::PushTaskThread(CUvTaskThread* pTaskThread) {
-    ASSERT_RET_VALUE(nullptr != pTaskThread, 1);
+    ASSERT_RET_VALUE(NULL != pTaskThread, 1);
     mcTaskThreadsMutex.Lock();
     msetTaskThreads.insert(pTaskThread);
     mcTaskThreadsMutex.UnLock();
@@ -50,13 +64,13 @@ int CUvTaskPool::PushTaskThread(CUvTaskThread* pTaskThread) {
 }
 
 int CUvTaskPool::DispatchTask(CTask* pTask) {
-    ASSERT_RET_VALUE(nullptr != pTask, 1);
-    CUvTaskThread* pTaskThread = nullptr;
+    ASSERT_RET_VALUE(NULL != pTask, 1);
+    CUvTaskThread* pTaskThread = NULL;
     mcTaskThreadsMutex.Lock();
     std::set<CUvTaskThread*>::iterator iter = msetTaskThreads.begin();
     if (iter != msetTaskThreads.end()) {
         pTaskThread = (CUvTaskThread*)*iter;
-        if (nullptr != pTaskThread) {
+        if (NULL != pTaskThread) {
             pTaskThread->SetTask(pTask);
             pTaskThread->Activate();
         }
@@ -65,9 +79,9 @@ int CUvTaskPool::DispatchTask(CTask* pTask) {
     }
     mcTaskThreadsMutex.UnLock();
 
-    if (nullptr == pTaskThread) {
+    if (NULL == pTaskThread) {
         pTaskThread = new CUvTaskThread();
-        ASSERT_RET_VALUE(nullptr != pTaskThread, 1);
+        ASSERT_RET_VALUE(NULL != pTaskThread, 1);
         pTaskThread->SetTask(pTask);
         pTaskThread->Start();
     }
