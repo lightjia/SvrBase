@@ -1,25 +1,37 @@
 project("SvrBase")
 
-set(CMAKE_CXX_FLAGS "-std=gnu++0x -fPIC")
+set(home_dir "${CMAKE_SOURCE_DIR}")
+set(lib_dir ${home_dir}/third)
+
+set(CMAKE_VERBOSE_MAKEFILE on)
+set(CMAKE_CXX_COMPILER g++)
+set(CMAKE_C_COMPILER gcc)
 
 macro(add_src_subdirs source_files)
 	foreach(_subdir ${ARGN})
 		set(_sub_files "")
-		aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/${_subdir}/src" _sub_files)
+		if("${_subdir}" STREQUAL ".")
+			aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}" _sub_files)
+			include_directories(${CMAKE_CURRENT_SOURCE_DIR}/) 
+		else()
+			aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/${_subdir}/src" _sub_files)
+			include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${_subdir}/include) 
+		endif()
 		set(source_files ${_sub_files} ${${source_files}})
-		
-		include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${_subdir}/include) 
 	endforeach(_subdir)
 endmacro()
 
-add_src_subdirs(source_files "." "base" "cfg" "libuv")
+add_src_subdirs(source_files "base" "cfg" "libuv")
 MESSAGE(STATUS "Src :" ${source_files})
 
-include_directories(../third/libuv/linux/include)
-include_directories(../third/rapidjson)
+include_directories(${lib_dir}/uuid/include)
+include_directories(${lib_dir}/libuv/linux/include)
+include_directories(${lib_dir}/rapidjson)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-
-add_library(${LIB_BPLUSTREE_NAME}_static STATIC ${source_files})
+set(CMAKE_C_FLAGS "-ggdb -fPIC")
+set(CMAKE_CXX_FLAGS "-ggdb -std=c++0x -fPIC")
+SET(LIBRARY_OUTPUT_PATH "${home_dir}/bin")
+#add_library(svrbase STATIC ${source_files})
+add_library(svrbase SHARED ${source_files})
 
 

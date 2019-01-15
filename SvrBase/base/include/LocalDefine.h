@@ -55,7 +55,7 @@ struct systemtime_t
 #pragma pack(1)
 struct len_str
 {
-	unsigned char* pStr;
+	char* pStr;
 	size_t iLen;
 };
 #pragma pack()

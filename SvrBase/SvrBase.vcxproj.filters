@@ -159,6 +159,9 @@
     <ClInclude Include="libuv\include\UvRwLock.h">
       <Filter>libuv\include</Filter>
     </ClInclude>
+    <ClInclude Include="base\include\GuidTool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -250,6 +253,9 @@
     </ClCompile>
     <ClCompile Include="libuv\src\UvRwLock.cpp">
       <Filter>libuv\src</Filter>
+    </ClCompile>
+    <ClCompile Include="base\src\GuidTool.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

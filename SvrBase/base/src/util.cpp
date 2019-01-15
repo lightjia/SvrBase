@@ -517,7 +517,7 @@ len_str get_bmp(const void* pBmp, int width, int height, int bitCount)
 
 	stImg.iLen = bmpHeader.bfSize;
 	fprintf(stderr, "get_bmp malloc\n");
-	stImg.pStr = (unsigned char*)do_malloc(sizeof(unsigned char)*bmpHeader.bfSize);
+	stImg.pStr = (char*)do_malloc(sizeof(char)*bmpHeader.bfSize);
 	if (NULL == stImg.pStr)
 	{
 		stImg.iLen = 0;
