@@ -16,5 +16,5 @@ public:
 public:
     std::string CreateGuid();
 };
-
+#define sGuidTool CGuidTool::Instance()
 #endif
