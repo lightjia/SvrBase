@@ -47,6 +47,7 @@ CTask* CUvTaskPool::PopTask() {
 
 int CUvTaskPool::PushTask(CTask* pTask) {
     ASSERT_RET_VALUE(NULL != pTask && mbStart, 1);
+    REF(pTask);
     mcQueTasksMutex.Lock();
     mqueTasks.push(pTask);
     mcQueTasksMutex.UnLock();
@@ -70,11 +71,6 @@ int CUvTaskPool::DispatchTask(CTask* pTask) {
     std::set<CUvTaskThread*>::iterator iter = msetTaskThreads.begin();
     if (iter != msetTaskThreads.end()) {
         pTaskThread = (CUvTaskThread*)*iter;
-        if (NULL != pTaskThread) {
-            pTaskThread->SetTask(pTask);
-            pTaskThread->Activate();
-        }
-
         msetTaskThreads.erase(iter);
     }
     mcTaskThreadsMutex.UnLock();
@@ -84,7 +80,10 @@ int CUvTaskPool::DispatchTask(CTask* pTask) {
         ASSERT_RET_VALUE(NULL != pTaskThread, 1);
         pTaskThread->SetTask(pTask);
         pTaskThread->Start();
+    } else {
+        pTaskThread->Activate();
     }
 
+    UNREF(pTask);
     return 0;
 }
