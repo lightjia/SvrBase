@@ -81,6 +81,7 @@ int CUvTaskPool::DispatchTask(CTask* pTask) {
         pTaskThread->SetTask(pTask);
         pTaskThread->Start();
     } else {
+        pTaskThread->SetTask(pTask);
         pTaskThread->Activate();
     }
 
