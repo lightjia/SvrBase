@@ -66,11 +66,18 @@ void CUvUdp::SendCb(uv_udp_send_t* pReq, int iStatus) {
 
     CUvUdp* pUdp = (CUvUdp*)uv_handle_get_data((uv_handle_t*)pReq);
     if (NULL != pUdp) {
-        pUdp->mcSendMutex.Lock();
-        tagUvUdpPkg stTmp = pUdp->mqueSendBuf.front();
-        DOFREE(stTmp.stBuf.base);
-        pUdp->mqueSendBuf.pop();
-        pUdp->mcSendMutex.UnLock();
+        std::map<uv_udp_send_t*, uv_buf_t*>::iterator iter = pUdp->mmapSend.find(pReq);
+        if (iter != pUdp->mmapSend.end()) {
+            uv_udp_send_t* pWriteReq = iter->first;
+            DOFREE(pWriteReq);
+            uv_buf_t* pBuf = iter->second;
+            DOFREE(pBuf->base);
+            DOFREE(pBuf);
+            pUdp->mmapSend.erase(iter);
+        }
+        else {
+            LOG_ERR("Can Not Find The WriteReq");
+        }
 
         pUdp->OnSend(iStatus);
         pUdp->DoSend();
@@ -78,26 +85,31 @@ void CUvUdp::SendCb(uv_udp_send_t* pReq, int iStatus) {
 }
 
 int CUvUdp::DoSend() {
-	if (uv_is_active((uv_handle_t*)&mstUvWriteReq)) {
-		return 0;
-	}
+    if (uv_is_closing((uv_handle_t*)&mpUdp)) {
+        return 0;
+    }
 
-    memset(&mstWriteBuf, 0, sizeof(mstWriteBuf));
+    uv_buf_t* pBuf = NULL;
     tagUvUdpPkg stTmp;
     mcSendMutex.Lock();
     if (!mqueSendBuf.empty()) {
         stTmp = mqueSendBuf.front();
-        mstWriteBuf.base = stTmp.stBuf.base;
-        mstWriteBuf.len = stTmp.stBuf.len;
+        mqueSendBuf.pop();
+        pBuf = (uv_buf_t*)do_malloc(sizeof(uv_buf_t));
+        pBuf->base = stTmp.stBuf.base;
+        pBuf->len = stTmp.stBuf.len;
     }
     mcSendMutex.UnLock();
 
-    if (mstWriteBuf.len <= 0) {
-        return 0;
+    if (!pBuf) {
+        return 1;
     }
 
-    uv_handle_set_data((uv_handle_t*)&mstUvWriteReq, (void*)this);
-    return uv_udp_send(&mstUvWriteReq, mpUdp, &mstWriteBuf, 1, (struct sockaddr*)&stTmp.stAddr, CUvUdp::SendCb);
+    uv_udp_send_t* pWriteReq = (uv_udp_send_t*)do_malloc(sizeof(uv_udp_send_t));
+    uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
+    mmapSend.insert(std::make_pair(pWriteReq, pBuf));
+
+    return uv_udp_send(pWriteReq, mpUdp, pBuf, 1, (struct sockaddr*)&stTmp.stAddr, CUvUdp::SendCb);
 }
 
 int CUvUdp::Start() {

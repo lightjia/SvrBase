@@ -102,7 +102,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../third/libuv/win/include;libuv/include;cfg/include;base/include;../third/rapidjson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>base/include;cfg/include;openssl/include;libuv/include;../third/libuv/win/include;../third/rapidjson;../third/openssl/win/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -160,6 +160,7 @@
     <ClInclude Include="base\include\GuidTool.h" />
     <ClInclude Include="base\include\Idle.h" />
     <ClInclude Include="base\include\LocalDefine.h" />
+    <ClInclude Include="base\include\RandTool.h" />
     <ClInclude Include="base\include\RcObject.h" />
     <ClInclude Include="base\include\singleton.h" />
     <ClInclude Include="base\include\Task.h" />
@@ -188,6 +189,10 @@
     <ClInclude Include="libuv\include\UvTcpSvr.h" />
     <ClInclude Include="libuv\include\UvThread.h" />
     <ClInclude Include="libuv\include\UvUdp.h" />
+    <ClInclude Include="openssl\include\OpensslBase64.h" />
+    <ClInclude Include="openssl\include\opensslinc.h" />
+    <ClInclude Include="openssl\include\OpensslMd5.h" />
+    <ClInclude Include="openssl\include\OpensslSha.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -199,6 +204,7 @@
     <ClCompile Include="base\src\EventMgr.cpp" />
     <ClCompile Include="base\src\GuidTool.cpp" />
     <ClCompile Include="base\src\Idle.cpp" />
+    <ClCompile Include="base\src\RandTool.cpp" />
     <ClCompile Include="base\src\RcObject.cpp" />
     <ClCompile Include="base\src\util.cpp" />
     <ClCompile Include="cfg\src\Config.cpp" />
@@ -222,6 +228,9 @@
     <ClCompile Include="libuv\src\UvTcpSvr.cpp" />
     <ClCompile Include="libuv\src\UvThread.cpp" />
     <ClCompile Include="libuv\src\UvUdp.cpp" />
+    <ClCompile Include="openssl\src\OpensslBase64.cpp" />
+    <ClCompile Include="openssl\src\OpensslMd5.cpp" />
+    <ClCompile Include="openssl\src\OpensslSha.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

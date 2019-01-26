@@ -499,7 +499,7 @@ int rm_dir(const char* pDirName) {
 len_str get_bmp(const void* pBmp, int width, int height, int bitCount)
 {
 	len_str stImg;
-	memset(&stImg, 0, sizeof(len_str));
+    BZERO(stImg);
 	if (NULL == pBmp)
 	{
 		return stImg;

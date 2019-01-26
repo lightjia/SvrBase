@@ -21,15 +21,18 @@ macro(add_src_subdirs source_files)
 	endforeach(_subdir)
 endmacro()
 
-add_src_subdirs(source_files "base" "cfg" "libuv")
+add_src_subdirs(source_files "base" "cfg" "libuv" "openssl")
 MESSAGE(STATUS "Src :" ${source_files})
 
 include_directories(${lib_dir}/uuid/include)
 include_directories(${lib_dir}/libuv/linux/include)
+include_directories(${lib_dir}/openssl/linux/include)
 include_directories(${lib_dir}/rapidjson)
 
 set(CMAKE_C_FLAGS "-ggdb -fPIC")
 set(CMAKE_CXX_FLAGS "-ggdb -std=c++0x -fPIC")
 SET(LIBRARY_OUTPUT_PATH "${home_dir}/bin")
-add_library(svrbase STATIC ${source_files})
-#add_library(svrbase SHARED ${source_files})
+#add_library(svrbase STATIC ${source_files})
+add_library(svrbase SHARED ${source_files})
+
+

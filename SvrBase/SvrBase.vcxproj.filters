@@ -40,6 +40,15 @@
     <Filter Include="cfg\src">
       <UniqueIdentifier>{0dde23a6-12f5-46aa-9d6e-467f0500683b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="openssl">
+      <UniqueIdentifier>{fde94a4b-4eef-41ec-a848-ea14f11f7690}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="openssl\include">
+      <UniqueIdentifier>{39b4943b-3914-45af-8d9d-2d53b2f1a8ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="openssl\src">
+      <UniqueIdentifier>{ddc8cf98-f78c-4e01-83f7-dbe46291a074}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -160,6 +169,21 @@
       <Filter>libuv\include</Filter>
     </ClInclude>
     <ClInclude Include="base\include\GuidTool.h">
+      <Filter>base\include</Filter>
+    </ClInclude>
+    <ClInclude Include="base\include\RandTool.h">
+      <Filter>base\include</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl\include\opensslinc.h">
+      <Filter>openssl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl\include\OpensslBase64.h">
+      <Filter>openssl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl\include\OpensslMd5.h">
+      <Filter>openssl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl\include\OpensslSha.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -255,6 +279,18 @@
       <Filter>libuv\src</Filter>
     </ClCompile>
     <ClCompile Include="base\src\GuidTool.cpp">
+      <Filter>base\src</Filter>
+    </ClCompile>
+    <ClCompile Include="base\src\RandTool.cpp">
+      <Filter>base\src</Filter>
+    </ClCompile>
+    <ClCompile Include="openssl\src\OpensslBase64.cpp">
+      <Filter>openssl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="openssl\src\OpensslMd5.cpp">
+      <Filter>openssl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="openssl\src\OpensslSha.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

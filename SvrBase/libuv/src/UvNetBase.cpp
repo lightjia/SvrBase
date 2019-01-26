@@ -4,7 +4,7 @@ CUvNetBase::CUvNetBase()
 {
     mstrIp = "";
     musPort = 0;
-    memset(&mstLocalAddr, 0, sizeof(mstLocalAddr));
+    BZERO(mstLocalAddr);
 }
 
 CUvNetBase::~CUvNetBase()

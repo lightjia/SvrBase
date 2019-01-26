@@ -2,7 +2,7 @@
 
 CUvBase::CUvBase(){
     mpUvLoop = NULL;
-    memset(&mstUvBuf, 0, sizeof(mstUvBuf));
+    BZERO(mstUvBuf);
 }
 
 CUvBase::~CUvBase(){
