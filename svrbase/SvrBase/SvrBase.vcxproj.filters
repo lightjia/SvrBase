@@ -184,7 +184,13 @@
       <Filter>openssl\include</Filter>
     </ClInclude>
     <ClInclude Include="openssl\include\OpensslSha.h">
-      <Filter>头文件</Filter>
+      <Filter>openssl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl\include\OpensslDes.h">
+      <Filter>openssl\include</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl\include\OpensslRsa.h">
+      <Filter>openssl\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -291,7 +297,13 @@
       <Filter>openssl\src</Filter>
     </ClCompile>
     <ClCompile Include="openssl\src\OpensslSha.cpp">
-      <Filter>源文件</Filter>
+      <Filter>openssl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="openssl\src\OpensslDes.cpp">
+      <Filter>openssl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="openssl\src\OpensslRsa.cpp">
+      <Filter>openssl\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

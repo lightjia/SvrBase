@@ -190,8 +190,10 @@
     <ClInclude Include="libuv\include\UvThread.h" />
     <ClInclude Include="libuv\include\UvUdp.h" />
     <ClInclude Include="openssl\include\OpensslBase64.h" />
+    <ClInclude Include="openssl\include\OpensslDes.h" />
     <ClInclude Include="openssl\include\opensslinc.h" />
     <ClInclude Include="openssl\include\OpensslMd5.h" />
+    <ClInclude Include="openssl\include\OpensslRsa.h" />
     <ClInclude Include="openssl\include\OpensslSha.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -229,7 +231,9 @@
     <ClCompile Include="libuv\src\UvThread.cpp" />
     <ClCompile Include="libuv\src\UvUdp.cpp" />
     <ClCompile Include="openssl\src\OpensslBase64.cpp" />
+    <ClCompile Include="openssl\src\OpensslDes.cpp" />
     <ClCompile Include="openssl\src\OpensslMd5.cpp" />
+    <ClCompile Include="openssl\src\OpensslRsa.cpp" />
     <ClCompile Include="openssl\src\OpensslSha.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
