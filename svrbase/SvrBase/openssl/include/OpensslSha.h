@@ -9,11 +9,11 @@ public:
     ~COpensslSha();
 
 public:
-    len_str Sha1(const char* psrc, int iSrcLen, char* pDst);
-    len_str Sha224(const char* psrc, int iSrcLen, char* pDst);
-    len_str Sha256(const char* psrc, int iSrcLen, char* pDst);
-    len_str Sha384(const char* psrc, int iSrcLen, char* pDst);
-    len_str Sha512(const char* psrc, int iSrcLen, char* pDst);
+    len_str Sha1(const unsigned char* psrc, int iSrcLen);
+    len_str Sha224(const unsigned char* psrc, int iSrcLen);
+    len_str Sha256(const unsigned char* psrc, int iSrcLen);
+    len_str Sha384(const unsigned char* psrc, int iSrcLen);
+    len_str Sha512(const unsigned char* psrc, int iSrcLen);
 };
 
 #define sOpensslSha COpensslSha::Instance()

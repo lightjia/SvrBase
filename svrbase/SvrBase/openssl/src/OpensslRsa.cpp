@@ -81,7 +81,7 @@ len_str COpensslRsa::RsaDecode(const char* psrc, size_t iLen) {
         lRet.pStr = (char *)do_malloc((len + 1)*sizeof(char));
 
         // ½âÃÜº¯Êý  
-        int ret = RSA_private_decrypt(iLen, (const unsigned char*)psrc, (unsigned char*)lRet.pStr, rsa, RSA_PKCS1_PADDING);
+        int ret = RSA_private_decrypt((int)iLen, (const unsigned char*)psrc, (unsigned char*)lRet.pStr, rsa, RSA_PKCS1_PADDING);
         if (ret > 0) {
             lRet.iLen = ret;
         } else {

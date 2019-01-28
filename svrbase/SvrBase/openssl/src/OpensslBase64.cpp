@@ -27,7 +27,7 @@ len_str COpensslBase64::Base64Encode(const char * pSrc, int iSrcLen, bool bNewLi
             lRet.iLen = bptr->length;
             lRet.pStr = (char *)do_malloc((bptr->length + 1) * sizeof(char));
             memcpy(lRet.pStr, bptr->data, bptr->length);
-            lRet.pStr[bptr->length] = 0;
+            lRet.pStr[bptr->length] = '\0';
         }
        
         BIO_free_all(b64);
