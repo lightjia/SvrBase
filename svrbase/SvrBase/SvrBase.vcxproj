@@ -188,6 +188,7 @@
     <ClInclude Include="libuv\include\UvTcpCli.h" />
     <ClInclude Include="libuv\include\UvTcpSvr.h" />
     <ClInclude Include="libuv\include\UvThread.h" />
+    <ClInclude Include="libuv\include\UvTimer.h" />
     <ClInclude Include="libuv\include\UvUdp.h" />
     <ClInclude Include="openssl\include\OpensslBase64.h" />
     <ClInclude Include="openssl\include\OpensslDes.h" />
@@ -229,6 +230,7 @@
     <ClCompile Include="libuv\src\UvTcpCli.cpp" />
     <ClCompile Include="libuv\src\UvTcpSvr.cpp" />
     <ClCompile Include="libuv\src\UvThread.cpp" />
+    <ClCompile Include="libuv\src\UvTimer.cpp" />
     <ClCompile Include="libuv\src\UvUdp.cpp" />
     <ClCompile Include="openssl\src\OpensslBase64.cpp" />
     <ClCompile Include="openssl\src\OpensslDes.cpp" />

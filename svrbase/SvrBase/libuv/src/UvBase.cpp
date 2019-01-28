@@ -5,30 +5,23 @@ CUvBase::CUvBase(){
     BZERO(mstUvBuf);
 }
 
-CUvBase::~CUvBase(){
-    if (NULL != mstUvBuf.pBuf) {
-        DOFREE(mstUvBuf.pBuf);
-    }
+CUvBase::~CUvBase() {
+    DOFREE(mstUvBuf.pBuf);
 }
 
 void CUvBase::UvBufAlloc(uv_handle_t* pStream, size_t iSize, uv_buf_t* pBuf) {
     CUvBase* pUvBase = (CUvBase*)uv_handle_get_data((uv_handle_t*)pStream);
-    if (NULL != pUvBase && NULL != pUvBase->mstUvBuf.pBuf)
-    {
-        *pBuf = uv_buf_init(pUvBase->mstUvBuf.pBuf + pUvBase->mstUvBuf.iUse, (unsigned int)(pUvBase->mstUvBuf.iLen - pUvBase->mstUvBuf.iUse));
-    }
-    else
-    {
-        LOG_ERR("RtpStreamAlloc Error");
-    }
+    ASSERT_RET(pUvBase && pUvBase->mstUvBuf.pBuf && pUvBase->mstUvBuf.iLen > 0 && pUvBase->mstUvBuf.iLen > pUvBase->mstUvBuf.iUse);
+    *pBuf = uv_buf_init(pUvBase->mstUvBuf.pBuf + pUvBase->mstUvBuf.iUse, (unsigned int)(pUvBase->mstUvBuf.iLen - pUvBase->mstUvBuf.iUse));
 }
 
 int CUvBase::Init(ssize_t iBufSize) {
     ASSERT_RET_VALUE(NULL != mpUvLoop, 1);
-    ASSERT_RET_VALUE(iBufSize > 0, 1);
-    mstUvBuf.pBuf = (char*)do_malloc(iBufSize);
+    if (iBufSize > 0) {
+        mstUvBuf.pBuf = (char*)do_malloc(iBufSize * sizeof(char));
+    }
+   
     mstUvBuf.iLen = iBufSize;
-
     return OnInit();
 }
 

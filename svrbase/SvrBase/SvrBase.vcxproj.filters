@@ -192,6 +192,9 @@
     <ClInclude Include="openssl\include\OpensslRsa.h">
       <Filter>openssl\include</Filter>
     </ClInclude>
+    <ClInclude Include="libuv\include\UvTimer.h">
+      <Filter>libuv\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -304,6 +307,9 @@
     </ClCompile>
     <ClCompile Include="openssl\src\OpensslRsa.cpp">
       <Filter>openssl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="libuv\src\UvTimer.cpp">
+      <Filter>libuv\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

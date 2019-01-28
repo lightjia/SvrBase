@@ -22,18 +22,18 @@ int CUvLoopMgr::AddUvBase(CUvBase* pUvBase) {
     if (!bFlag) {
         CUvLoop* pUvLoop = new CUvLoop();
         if (NULL != pUvLoop) {
-            if (0 == pUvLoop->Init()) {
+            if (0 == pUvLoop->Init(0)) {
                 pUvLoop->PushUvBase(pUvBase);
 
                 mcVecUvLoopMuex.Lock();
                 mvecUvLoop.push_back(pUvLoop);
                 mcVecUvLoopMuex.UnLock();
-            }else {
+            } else {
                 DODELETE(pUvLoop);
                 LOG_ERR("CUvLoop Init Error");
                 return 1;
             }
-        }else {
+        } else {
             LOG_ERR("New UvLoop Error");
             return 1;
         }
