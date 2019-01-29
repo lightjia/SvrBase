@@ -66,13 +66,15 @@ void CUvUdp::SendCb(uv_udp_send_t* pReq, int iStatus) {
 
     CUvUdp* pUdp = (CUvUdp*)uv_handle_get_data((uv_handle_t*)pReq);
     if (NULL != pUdp) {
-        std::map<uv_udp_send_t*, uv_buf_t*>::iterator iter = pUdp->mmapSend.find(pReq);
+        std::map<uv_udp_send_t*, tagUvBufArray>::iterator iter = pUdp->mmapSend.find(pReq);
         if (iter != pUdp->mmapSend.end()) {
             uv_udp_send_t* pWriteReq = iter->first;
             DOFREE(pWriteReq);
-            uv_buf_t* pBuf = iter->second;
-            DOFREE(pBuf->base);
-            DOFREE(pBuf);
+            for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+                DOFREE(iter->second.pBufs[i].base);
+            }
+
+            DOFREE(iter->second.pBufs);
             pUdp->mmapSend.erase(iter);
         }
         else {
@@ -89,27 +91,30 @@ int CUvUdp::DoSend() {
         return 0;
     }
 
-    uv_buf_t* pBuf = NULL;
+    tagUvBufArray stBufArray;
     tagUvUdpPkg stTmp;
     mcSendMutex.Lock();
-    if (!mqueSendBuf.empty()) {
-        stTmp = mqueSendBuf.front();
-        mqueSendBuf.pop();
-        pBuf = (uv_buf_t*)do_malloc(sizeof(uv_buf_t));
-        pBuf->base = stTmp.stBuf.base;
-        pBuf->len = stTmp.stBuf.len;
+    stBufArray.iBufNum = (unsigned int)mqueSendBuf.size();
+    if (stBufArray.iBufNum > 0) {
+        stBufArray.pBufs = (uv_buf_t*)do_malloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
+        for (unsigned int i = 0; i < stBufArray.iBufNum; ++i) {
+            stTmp = mqueSendBuf.front();
+            mqueSendBuf.pop();
+            stBufArray.pBufs[i].base = stTmp.stBuf.base;
+            stBufArray.pBufs[i].len = stTmp.stBuf.len;
+        }
     }
     mcSendMutex.UnLock();
 
-    if (!pBuf) {
+    if (!stBufArray.iBufNum) {
         return 1;
     }
 
     uv_udp_send_t* pWriteReq = (uv_udp_send_t*)do_malloc(sizeof(uv_udp_send_t));
     uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
-    mmapSend.insert(std::make_pair(pWriteReq, pBuf));
+    mmapSend.insert(std::make_pair(pWriteReq, stBufArray));
 
-    return uv_udp_send(pWriteReq, mpUdp, pBuf, 1, (struct sockaddr*)&stTmp.stAddr, CUvUdp::SendCb);
+    return uv_udp_send(pWriteReq, mpUdp, stBufArray.pBufs, stBufArray.iBufNum, (struct sockaddr*)&stTmp.stAddr, CUvUdp::SendCb);
 }
 
 int CUvUdp::Start() {
@@ -147,6 +152,18 @@ void CUvUdp::CleanSendQueue() {
         mqueSendBuf.pop();
     }
     mcSendMutex.UnLock();
+
+    while (!mmapSend.empty()) {
+        std::map<uv_udp_send_t*, tagUvBufArray>::iterator iter = mmapSend.begin();
+        uv_udp_send_t* pWriteReq = iter->first;
+        DOFREE(pWriteReq);
+        for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+            DOFREE(iter->second.pBufs[i].base);
+        }
+
+        DOFREE(iter->second.pBufs);
+        mmapSend.erase(iter);
+    }
 }
 
 int CUvUdp::Close() {

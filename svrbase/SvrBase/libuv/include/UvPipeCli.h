@@ -44,7 +44,7 @@ private:
     uv_async_t mstUvSendAsync;
     std::queue<uv_buf_t> mqueSendBuf;
     CUvMutex mcSendMutex;
-    std::map<uv_write_t*, uv_buf_t*> mmapSend;
+    std::map<uv_write_t*, tagUvBufArray> mmapSend;
 };
 
 #endif

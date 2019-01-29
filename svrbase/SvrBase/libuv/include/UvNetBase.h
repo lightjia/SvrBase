@@ -12,6 +12,8 @@ public:
 
 public:
     int SetNetParam(const char* pIp, unsigned short iPort);
+    unsigned short GetPort() { return musPort; }
+    std::string& GetIp() { return mstrIp; }
 
 protected:
     unsigned short musPort;

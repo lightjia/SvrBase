@@ -110,13 +110,15 @@ void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pReq);
     if (NULL != pTcpCli)
     {
-        std::map<uv_write_t*, uv_buf_t*>::iterator iter = pTcpCli->mmapSend.find(pReq);
+        std::map<uv_write_t*, tagUvBufArray>::iterator iter = pTcpCli->mmapSend.find(pReq);
         if (iter != pTcpCli->mmapSend.end()) {
             uv_write_t* pWriteReq = iter->first;
             DOFREE(pWriteReq);
-            uv_buf_t* pBuf = iter->second;
-            DOFREE(pBuf->base);
-            DOFREE(pBuf);
+            for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+                DOFREE(iter->second.pBufs[i].base);
+            }
+
+            DOFREE(iter->second.pBufs);
             pTcpCli->mmapSend.erase(iter);
         } else {
             LOG_ERR("Can Not Find The WriteReq");
@@ -130,9 +132,7 @@ void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
 
             LOG_ERR("uv_write:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
             pTcpCli->Close();
-        }
-        else
-        {
+        } else {
             pTcpCli->DoSend();
         }
     }
@@ -150,32 +150,36 @@ int CUvTcpCli::DoSend() {
 		return 0;
 	}
 
-    uv_buf_t* pBuf = NULL;
+    tagUvBufArray stBufArray;
+    BZERO(stBufArray);
     mcSendMutex.Lock();
-    if (!mqueSendBuf.empty()) {
-        uv_buf_t stTmp = mqueSendBuf.front();
-        mqueSendBuf.pop();
-        pBuf = (uv_buf_t*)do_malloc(sizeof(uv_buf_t));
-        pBuf->base = stTmp.base;
-        pBuf->len = stTmp.len;
+    stBufArray.iBufNum = (unsigned int)mqueSendBuf.size();
+    if (stBufArray.iBufNum > 0) {
+        stBufArray.pBufs = (uv_buf_t*)do_malloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
+        for (unsigned int i = 0; i < stBufArray.iBufNum; ++i) {
+            uv_buf_t stTmp = mqueSendBuf.front();
+            mqueSendBuf.pop();
+            stBufArray.pBufs[i].base = stTmp.base;
+            stBufArray.pBufs[i].len = stTmp.len;
+        }
     }
     mcSendMutex.UnLock();
-    
-    if (!pBuf) {
+
+    if (!stBufArray.iBufNum) {
         return 1;
     }
 
     uv_write_t* pWriteReq = (uv_write_t*)do_malloc(sizeof(uv_write_t));
     uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
-    mmapSend.insert(std::make_pair(pWriteReq, pBuf));
-    return uv_write(pWriteReq, (uv_stream_t*)mpTcpCli, pBuf, 1, CUvTcpCli::SendCb);
+    mmapSend.insert(std::make_pair(pWriteReq, stBufArray));
+    return uv_write(pWriteReq, (uv_stream_t*)mpTcpCli, stBufArray.pBufs, stBufArray.iBufNum, CUvTcpCli::SendCb);
 }
 
 int CUvTcpCli::Send(char* pData, ssize_t iLen){
     ASSERT_RET_VALUE(pData && iLen > 0 && mpTcpCli && mpUvLoop && uv_is_active((uv_handle_t*)&mstUvSendAsync), 1);
 
     uv_buf_t stTmp;
-    stTmp.base = (char*)do_malloc(iLen);
+    stTmp.base = (char*)do_malloc(iLen * sizeof(char));
     stTmp.len = (unsigned long)iLen;
     memcpy(stTmp.base, pData, iLen);
     mcSendMutex.Lock();
@@ -201,12 +205,14 @@ void CUvTcpCli::CleanSendQueue(){
     mcSendMutex.UnLock();
 
     while (!mmapSend.empty()) {
-        std::map<uv_write_t*, uv_buf_t*>::iterator iter = mmapSend.begin();
+        std::map<uv_write_t*, tagUvBufArray>::iterator iter = mmapSend.begin();
         uv_write_t* pWriteReq = iter->first;
         DOFREE(pWriteReq);
-        uv_buf_t* pBuf = iter->second;
-        DOFREE(pBuf->base);
-        DOFREE(pBuf);
+        for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+            DOFREE(iter->second.pBufs[i].base);
+        }
+
+        DOFREE(iter->second.pBufs);
         mmapSend.erase(iter);
     }
 }

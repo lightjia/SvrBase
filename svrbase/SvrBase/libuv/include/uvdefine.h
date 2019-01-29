@@ -10,5 +10,10 @@ struct tagUvBuf {
     ssize_t iUse;
     ssize_t iTotal;
 };
+
+struct tagUvBufArray {
+    uv_buf_t* pBufs;
+    unsigned int iBufNum;
+};
 #pragma pack()
 #endif
