@@ -1,4 +1,5 @@
 #include "UvTimer.h"
+#include "CLogmanager.h"
 
 CUvTimer::CUvTimer(){
     mbInit = false;

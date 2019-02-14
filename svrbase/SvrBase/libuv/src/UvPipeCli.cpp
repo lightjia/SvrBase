@@ -39,7 +39,6 @@ void CUvPipeCli::SetPipeCli(uv_pipe_t* pPipeCli) {
 
 int CUvPipeCli::AfterConn() {
     Recv();
-    uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
 	mcSendAsyncMutex.Lock();
 	uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
 	uv_async_init(mpUvLoop, &mstUvSendAsync, CUvPipeCli::NotifySend);

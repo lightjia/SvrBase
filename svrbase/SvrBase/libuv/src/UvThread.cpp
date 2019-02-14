@@ -1,4 +1,5 @@
 #include "UvThread.h"
+#include "CLogmanager.h"
 
 CUvThread::CUvThread(){
     m_bInit = false;

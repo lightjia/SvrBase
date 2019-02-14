@@ -4,8 +4,10 @@
 #include <queue>
 #include <string>
 #include "singleton.h"
-#include "CMutex.h"
 #include "util.h"
+#include "UvMutex.h"
+#include "UvThread.h"
+#include "UvCond.h"
 
 enum LogType{ LOG_TYPE_SCREEN = 0, LOG_TYPE_FILE, LOG_TYPE_TEE, LOG_TYPE_MAX};
 enum LogLevel{
@@ -31,7 +33,7 @@ struct tagLogItem
 };
 #pragma pack()
 
-class CLogmanger : public CSingleton<CLogmanger>
+class CLogmanger : public CSingleton<CLogmanger>, public CUvThread
 {
 	SINGLE_CLASS_INITIAL(CLogmanger);
 
@@ -43,6 +45,9 @@ public:
 	int SetLogType(int iType);
 	int SetLogLevel(int iLevel);
 	int SetLogPath(const char* pPath);
+
+protected:
+    int OnThreadRun();
 
 private:
 	int Check();
@@ -56,10 +61,10 @@ private:
 	bool mbInit;
 	std::string mstrDir;
 	FILE* mpFile;
-	FILE* mpTmpFile;
-	CMutex mcMutex;
-
-  log_cb mpLogCb;
+	CUvMutex mcQueLogItemsMutex;
+    std::queue<tagLogItem> mQueLogItems;
+    CUvCond mcCond;
+    log_cb mpLogCb;
 };
 
 #define sLog CLogmanger::Instance()

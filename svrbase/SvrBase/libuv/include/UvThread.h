@@ -2,7 +2,7 @@
 #define __CUVTHREAD__H_
 #include "uv.h"
 #include "UvSem.h"
-#include "CLogmanager.h"
+
 class CUvThread{
 public:
     CUvThread();

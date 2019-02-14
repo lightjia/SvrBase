@@ -31,37 +31,24 @@ CLogmanger::CLogmanger()
 	mstrDir = "";
 	mbInit = false;
 	mpFile = stdout;
-	mpTmpFile = NULL;
     mpLogCb = NULL;
 }
 
-CLogmanger::~CLogmanger()
-{
-	if (NULL != mpFile)
-	{
+CLogmanger::~CLogmanger(){
+	if (NULL != mpFile){
 		fclose(mpFile);
 		mpFile = NULL;
 	}
-
-	if (NULL != mpTmpFile)
-	{
-		fclose(mpTmpFile);
-		mpTmpFile = NULL;
-	}
 }
 
-FILE* CLogmanger::GetFile()
-{
-	if (mpTmpFile != NULL  && mpTmpFile != stdout)
-	{
-		fclose(mpTmpFile);
-		mpTmpFile = NULL;
+FILE* CLogmanger::GetFile(){
+	if (mpFile != NULL  && mpFile != stdout){
+		fclose(mpFile);
+        mpFile = NULL;
 	}
 
-	mpTmpFile = mpFile;
     FILE* pTmpTile = stdout;
-	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE)
-	{
+	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
 		struct systemtime_t stNow = get_now_time();
 		char szFileName[1000];
 		snprintf(szFileName, 1000, "%02d-%02d-%02d-%02d-%02d-%02d.log", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec);
@@ -87,17 +74,10 @@ FILE* CLogmanger::GetFile()
 int CLogmanger::Check()
 {
 	//文件过大创建新文件
-	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE)
-	{
-		if (mlCount >= MAX_PER_LOGFILE_SIZE)
-		{
-			mcMutex.Lock();
-			if (mlCount >= MAX_PER_LOGFILE_SIZE)
-			{
+	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
+		if (mlCount >= MAX_PER_LOGFILE_SIZE){
 				mlCount = 0;
 				GetFile();
-			}
-			mcMutex.UnLock();
 		}
 	}
 
@@ -159,7 +139,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...)
 	if (iLevel <= LOG_LEVEL_INFO)
 	{
 		struct systemtime_t stNow = get_now_time();
-		nPos = snprintf(szBuf, MAX_PER_LINE_LOG, "[%02d/%02d/%02d %02d:%02d:%02d.%06d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
+		nPos = snprintf(szBuf, MAX_PER_LINE_LOG, "[%02d/%02d/%02d %02d:%02d:%02d.%04d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
 	}
 	
 	va_list ap;
@@ -178,7 +158,11 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...)
 	tagLogItem stLog;
 	stLog.iLevel = iLevel;
 	stLog.strLog = szBuf;
-	PrintItem(stLog);
+	
+    mcQueLogItemsMutex.Lock();
+    mQueLogItems.push(stLog);
+    mcQueLogItemsMutex.UnLock();
+    mcCond.Signal();
 }
 
 int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb)
@@ -218,6 +202,7 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb)
 		return 1;
 	}
 
+    Start();
 	mbInit = true;
 	return 0;
 }
@@ -251,6 +236,29 @@ int CLogmanger::PrintItem(tagLogItem& stLogItem)
 	}
 #endif
 
-	atomic_change((long*)&mlCount, (int)stLogItem.strLog.size());
+    mlCount += (int)stLogItem.strLog.size();
 	return Check();
+}
+
+int CLogmanger::OnThreadRun() {
+    for (;;) {
+        mcCond.Wait();
+        std::queue<tagLogItem> queTmp;
+        if (!mcQueLogItemsMutex.TryLock()) {
+            while (!mQueLogItems.empty()) {
+                queTmp.push(mQueLogItems.front());
+                mQueLogItems.pop();
+            }
+
+            mcQueLogItemsMutex.UnLock();
+        }
+        
+        while (!queTmp.empty()) {
+            tagLogItem stLog = queTmp.front();
+            queTmp.pop();
+            PrintItem(stLog);
+        }
+    }
+
+    return 0;
 }

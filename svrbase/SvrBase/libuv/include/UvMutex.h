@@ -16,4 +16,15 @@ private:
     uv_mutex_t mstUvMutex;
 };
 
+class CUvAutoMutex {
+public:
+    CUvAutoMutex(CUvMutex* pMutex);
+    ~CUvAutoMutex();
+
+private:
+    CUvAutoMutex();
+
+private:
+    CUvMutex* mpMutex;
+};
 #endif
