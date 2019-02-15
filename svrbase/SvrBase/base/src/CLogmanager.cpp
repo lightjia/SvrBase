@@ -253,7 +253,7 @@ int CLogmanger::StopLog()
 
 void CLogmanger::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
     ASSERT_RET(pLogItem && pLogItem->iUse > 0 && pLogItem->pLog && pFile);
-    unsigned int iOff = 0;
+   
     bool bColor = false;
     if (stdout == pFile && pLogItem->iLevel < LOG_LEVEL_DBG) {
         bColor = true;
@@ -263,6 +263,8 @@ void CLogmanger::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
         printf("%s", LOG_COLOR[pLogItem->iLevel]);
 #endif
     }
+
+    unsigned int iOff = 0;
     while (iOff < pLogItem->iUse) {
         int iWrite = (int)fwrite(pLogItem->pLog + iOff, 1, pLogItem->iUse - iOff, pFile);
         if (iWrite < 0) {
@@ -314,7 +316,7 @@ int CLogmanger::OnThreadRun() {
                 if (pLogItem) {
                     std::map<int, std::vector<tagLogItem*>*>::iterator iter_map = mMapFreeLogItems.find(pLogItem->iLevel);
                     if (iter_map != mMapFreeLogItems.end()) {
-                        iter_map->second->push_back(pLogItem);
+                        iter_map->second->insert(iter_map->second->begin(), pLogItem);
                         iter = vecTmp.erase(iter);
                     } else {
                         fprintf(stderr, "Not find level:%d log\n", pLogItem->iLevel);
