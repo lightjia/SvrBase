@@ -1,30 +1,30 @@
 #include "CLogmanager.h"
 
-#define RESET           0  
-#define BRIGHT          1  
-#define DIM             2  
-#define UNDERLINE       4  
-#define BLINK           5  
-#define REVERSE         7  
-#define HIDDEN          8  
+#ifdef WIN32
+const static WORD LOG_COLOR[LOG_LEVEL_MAX] = {
+    FOREGROUND_RED | FOREGROUND_INTENSITY,
+    0,
+    0,
+    0,
+    0
+    //FOREGROUND_RED | 
+};
+#else
 
-#define BLACK           0  
-#define RED             1  
-#define GREEN           2  
-#define YELLOW          3  
-#define BLUE            4  
-#define MAGENTA         5  
-#define CYAN            6  
-#define WHITE           7 
-
-#if (defined PLATFORM_WINDOWS)
-#elif  (defined PLATFORM_LINUX)
-#define COLOR_PRINT_BEGIN	\033
-#define COLOR_PRINT_END	\033[0m
+const static char LOG_COLOR[LOG_LEVEL_MAX][50] = {
+    "\e[31m", //red
+    "\e[0m",
+    "\e[0m",
+    "\e[0m",
+    "\e[0m"
+    //"\e[34m\e[1m",//hight blue
+    //"\e[33m", //yellow
+    //"\e[32m", //green
+    //"\e[35m" 
+};
 #endif
 
-CLogmanger::CLogmanger()
-{
+CLogmanger::CLogmanger(){
 	miLevel = LOG_LEVEL_ERR;
 	miType = LOG_TYPE_SCREEN;
 	mlCount = 0;
@@ -42,11 +42,6 @@ CLogmanger::~CLogmanger(){
 }
 
 FILE* CLogmanger::GetFile(){
-	if (mpFile != NULL  && mpFile != stdout){
-		fclose(mpFile);
-        mpFile = NULL;
-	}
-
     FILE* pTmpTile = stdout;
 	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
 		struct systemtime_t stNow = get_now_time();
@@ -67,7 +62,8 @@ FILE* CLogmanger::GetFile(){
 		}
 	}
 	
-    mpFile = pTmpTile;
+    SetLogFile(pTmpTile);
+
 	return mpFile;
 }
 
@@ -84,62 +80,75 @@ int CLogmanger::Check()
 	return 0;
 }
 
-int CLogmanger::SetLogType(int iType)
-{
-	if (!mbInit || iType < LOG_TYPE_SCREEN || iType >= LOG_TYPE_MAX)
-	{
+int CLogmanger::SetLogType(int iType){
+	if (iType < LOG_TYPE_SCREEN || iType >= LOG_TYPE_MAX){
 		return -1;
 	}
 
-	if (iType == miType)
-	{
-		return 0;
-	}
-
+    mcConfMutex.Lock();
 	miType = iType;
+    mcConfMutex.UnLock();
+
 	GetFile();
 
 	return 0;
 }
 
-int CLogmanger::SetLogLevel(int iLevel)
-{
-	if (!mbInit || iLevel < LOG_LEVEL_ERR)
-	{
+int CLogmanger::SetLogLevel(int iLevel){
+	if (iLevel < LOG_LEVEL_ERR){
 		return -1;
 	}
 
+    mcConfMutex.Lock();
 	miLevel = iLevel;
+    mcConfMutex.UnLock();
 
 	return 0;
 }
 
-int CLogmanger::SetLogPath(const char* pPath)
-{
-	if (!mbInit || NULL == pPath || str_cmp(pPath, mstrDir.c_str(), true))
-	{
+int CLogmanger::SetLogPath(const char* pPath){
+	if (NULL == pPath || str_cmp(pPath, mstrDir.c_str(), true)){
 		return 1;
 	}
 
+    mcConfMutex.Lock();
 	mstrDir = pPath;
+    mcConfMutex.UnLock();
+
+    if (make_dirs(mstrDir.c_str())){
+        fprintf(stderr, "make_dirs error!");
+    }
+
 	GetFile();
 	return 0;
 }
 
-void CLogmanger::AddLogItem(int iLevel, const char *format, ...)
-{
-	if (iLevel > miLevel || iLevel > LOG_LEVEL_MAX || !mbInit)
-	{
+int CLogmanger::SetLogFile(FILE* pFile) {
+    if (pFile) {
+        mcConfMutex.Lock();
+        if (mpFile && mpFile != stdout) {
+            fclose(mpFile);
+            mpFile = NULL;
+        }
+
+        mpFile = pFile;
+        mcConfMutex.UnLock();
+    }
+
+    return 0;
+}
+
+void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
+	if (iLevel > miLevel || iLevel > LOG_LEVEL_MAX || !mbInit){
 		return;
 	}
 
-	char szBuf[MAX_PER_LINE_LOG];
+	char szBuf[MAX_PER_LINE_LOG + 1];
 	memset(szBuf, 0, sizeof(szBuf));
 	int nPos = 0;
-	if (iLevel <= LOG_LEVEL_INFO)
-	{
+	if (iLevel <= LOG_LEVEL_INFO){
 		struct systemtime_t stNow = get_now_time();
-		nPos = snprintf(szBuf, MAX_PER_LINE_LOG, "[%02d/%02d/%02d %02d:%02d:%02d.%04d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
+		nPos = snprintf(szBuf, MAX_PER_LINE_LOG, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
 	}
 	
 	va_list ap;
@@ -151,57 +160,85 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...)
 #endif
 	va_end(ap);
 
+    szBuf[nPos] = '\n';
+    nPos++;
     if (mpLogCb) {
         mpLogCb(iLevel, szBuf);
     }
-
-	tagLogItem stLog;
-	stLog.iLevel = iLevel;
-	stLog.strLog = szBuf;
 	
     mcQueLogItemsMutex.Lock();
-    mQueLogItems.push(stLog);
+    for (;;) {
+        std::vector<tagLogItem*>* pVecFreeLogItems = NULL;
+        std::map<int, std::vector<tagLogItem*>*>::iterator iter = mMapFreeLogItems.find(iLevel);
+        if (iter == mMapFreeLogItems.end()) {
+            pVecFreeLogItems = new std::vector<tagLogItem*>();
+            mMapFreeLogItems.insert(std::make_pair(iLevel, pVecFreeLogItems));
+        } else {
+            pVecFreeLogItems = iter->second;
+        }
+
+        if (!pVecFreeLogItems) {
+            continue;
+        }
+
+        tagLogItem* pLogItem = NULL;
+        if (!pVecFreeLogItems->empty()) {
+            pLogItem = pVecFreeLogItems->back();
+        } else {
+            pLogItem = (tagLogItem*)do_malloc(sizeof(tagLogItem));
+            pLogItem->pLog = (char*)do_malloc(MAX_PER_LOG_ITEM_CACHE_SIZE * sizeof(char));
+            pLogItem->iTotal = MAX_PER_LOG_ITEM_CACHE_SIZE;
+            pLogItem->iLevel = iLevel;
+            pVecFreeLogItems->push_back(pLogItem);
+        }
+
+        if (!pLogItem) {
+            continue;
+        }
+
+        if (nPos + pLogItem->iUse < pLogItem->iTotal) {
+            memcpy(pLogItem->pLog + pLogItem->iUse, szBuf, nPos);
+            pLogItem->iUse += nPos;
+
+            if (mQueLogItems.empty()) {
+                mQueLogItems.push(pLogItem);
+                pVecFreeLogItems->pop_back();
+            }
+
+            break;
+        } else {
+            mQueLogItems.push(pLogItem);
+            pVecFreeLogItems->pop_back();
+        }
+    }
     mcQueLogItemsMutex.UnLock();
+
     mcCond.Signal();
 }
 
-int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb)
-{
-  if (NULL != pLogCb)
-  {
+int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
+  if (NULL != pLogCb){
     mpLogCb = pLogCb;
+    mbInit = true;
     return 0;
   }
 
-	if (mbInit)
-	{
+	if (mbInit){
 		return 1;
 	}
 
-	miType = iType;
-	miLevel = iLevel;
-	if (NULL != szDir && strlen(szDir) > 0 && !str_cmp(szDir, ".", true))
-	{
-		mstrDir = szDir;
-	}
-	else
-	{
-		mstrDir = get_app_path();
-		mstrDir += "log";
+    SetLogType(iType);
+    SetLogLevel(iLevel);
+
+    std::string strLogDir;
+	if (NULL != szDir && strlen(szDir) > 0 && !str_cmp(szDir, ".", true)){
+        strLogDir = szDir;
+	} else {
+        strLogDir = get_app_path();
+        strLogDir += "log";
 	}
 
-	if (make_dirs(mstrDir.c_str()))
-	{
-		fprintf(stderr, "make_dirs error!");
-	}
-	
-	GetFile();
-
-	if (NULL == mpFile)
-	{
-		return 1;
-	}
-
+    SetLogPath(strLogDir.c_str());
     Start();
 	mbInit = true;
 	return 0;
@@ -214,49 +251,88 @@ int CLogmanger::StopLog()
 	return 0;
 }
 
-int CLogmanger::PrintItem(tagLogItem& stLogItem)
+void CLogmanger::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
+    ASSERT_RET(pLogItem && pLogItem->iUse > 0 && pLogItem->pLog && pFile);
+    unsigned int iOff = 0;
+    bool bColor = false;
+    if (stdout == pFile && pLogItem->iLevel < LOG_LEVEL_DBG) {
+        bColor = true;
+#if (defined PLATFORM_WINDOWS)
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LOG_COLOR[pLogItem->iLevel]);
+#elif  (defined PLATFORM_LINUX)
+        printf("%s", LOG_COLOR[pLogItem->iLevel]);
+#endif
+    }
+    while (iOff < pLogItem->iUse) {
+        int iWrite = (int)fwrite(pLogItem->pLog + iOff, 1, pLogItem->iUse - iOff, pFile);
+        if (iWrite < 0) {
+            fprintf(stderr, "Write Log Error\n");
+            break;
+        }
+
+        iOff += iWrite;
+    }
+
+    if (bColor) {
+#if (defined PLATFORM_WINDOWS)
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY);
+#elif  (defined PLATFORM_LINUX)
+        printf("\e[0m");
+#endif
+    }
+}
+
+int CLogmanger::PrintItem(tagLogItem* pLogItem)
 {
-#if (defined PLATFORM_WINDOWS)
-	if (miType == LOG_TYPE_SCREEN && stLogItem.iLevel == LOG_LEVEL_ERR)
-	{
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_INTENSITY);
-	}
-#endif
+    ASSERT_RET_VALUE(pLogItem && mpFile, 1);
 
-	fprintf(mpFile, "%s\n", stLogItem.strLog.c_str());
-	if (miType == LOG_TYPE_TEE)
-	{
-		fprintf(stdout, "%s\n", stLogItem.strLog.c_str());
-	}
+    WriteLog(pLogItem, mpFile);
+    if (miType == LOG_TYPE_TEE && mpFile != stdout)
+    {
+        WriteLog(pLogItem, stdout);
+    }
 
-#if (defined PLATFORM_WINDOWS)
-	if (miType == LOG_TYPE_SCREEN && stLogItem.iLevel == LOG_LEVEL_ERR)
-	{
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY);
-	}
-#endif
-
-    mlCount += (int)stLogItem.strLog.size();
+    mlCount += pLogItem->iUse;
+    pLogItem->iUse = 0;
+    memset(pLogItem->pLog, 0, pLogItem->iTotal);
 	return Check();
 }
 
 int CLogmanger::OnThreadRun() {
+    std::vector<tagLogItem*> vecTmp;
     for (;;) {
         mcCond.Wait();
-        std::queue<tagLogItem> queTmp;
+        std::queue<tagLogItem*> queTmp;
         if (!mcQueLogItemsMutex.TryLock()) {
             while (!mQueLogItems.empty()) {
                 queTmp.push(mQueLogItems.front());
                 mQueLogItems.pop();
             }
 
+            for (std::vector<tagLogItem*>::iterator iter = vecTmp.begin(); iter != vecTmp.end(); ) {
+                tagLogItem* pLogItem = *iter;
+                if (pLogItem) {
+                    std::map<int, std::vector<tagLogItem*>*>::iterator iter_map = mMapFreeLogItems.find(pLogItem->iLevel);
+                    if (iter_map != mMapFreeLogItems.end()) {
+                        iter_map->second->push_back(pLogItem);
+                        iter = vecTmp.erase(iter);
+                    } else {
+                        fprintf(stderr, "Not find level:%d log\n", pLogItem->iLevel);
+                        ++iter;
+                    }
+                }
+            }
             mcQueLogItemsMutex.UnLock();
         }
         
         while (!queTmp.empty()) {
-            tagLogItem stLog = queTmp.front();
+            tagLogItem* pLogItem = queTmp.front();
             queTmp.pop();
-            PrintItem(stLog);
+
+            if (pLogItem) {
+                PrintItem(pLogItem);
+                vecTmp.push_back(pLogItem);
+            }
         }
     }
 

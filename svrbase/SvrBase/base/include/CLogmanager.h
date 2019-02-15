@@ -1,13 +1,14 @@
 #ifndef __LOGMANAGER__H_
 #define __LOGMANAGER__H_
-#include <cstdio>
-#include <queue>
-#include <string>
 #include "singleton.h"
 #include "util.h"
 #include "UvMutex.h"
 #include "UvThread.h"
 #include "UvCond.h"
+#include <queue>
+#include <string>
+#include <vector>
+#include <map>
 
 enum LogType{ LOG_TYPE_SCREEN = 0, LOG_TYPE_FILE, LOG_TYPE_TEE, LOG_TYPE_MAX};
 enum LogLevel{
@@ -20,8 +21,8 @@ enum LogLevel{
 };
 
 #define MAX_PER_LOGFILE_SIZE 500*1024*1024	//单个日志文件的大小为500M
-#define MAX_PER_LINE_LOG	2048	//一行日志最大缓存
-
+#define MAX_PER_LINE_LOG	1024 * 10	//一行日志最大缓存
+#define MAX_PER_LOG_ITEM_CACHE_SIZE 1024*100 //单个日志项最高缓存
 
 typedef void(*log_cb)(int iLevel, const char *pData);
 
@@ -29,7 +30,9 @@ typedef void(*log_cb)(int iLevel, const char *pData);
 struct tagLogItem
 {
 	int iLevel;
-	std::string strLog;
+    char* pLog;
+    unsigned int iUse;
+    unsigned int iTotal;
 };
 #pragma pack()
 
@@ -52,7 +55,9 @@ protected:
 private:
 	int Check();
 	FILE* GetFile();
-	int PrintItem(tagLogItem& stLogItem);
+    int SetLogFile(FILE* pFile);
+	int PrintItem(tagLogItem* pLogItem);
+    void WriteLog(tagLogItem* pLogItem, FILE* pFile);
 
 private:
 	int miType;
@@ -61,8 +66,10 @@ private:
 	bool mbInit;
 	std::string mstrDir;
 	FILE* mpFile;
+    CUvMutex mcConfMutex;
 	CUvMutex mcQueLogItemsMutex;
-    std::queue<tagLogItem> mQueLogItems;
+    std::queue<tagLogItem*> mQueLogItems;
+    std::map<int, std::vector<tagLogItem*>*> mMapFreeLogItems;
     CUvCond mcCond;
     log_cb mpLogCb;
 };
