@@ -302,7 +302,8 @@ int CLogmanger::PrintItem(tagLogItem* pLogItem)
 int CLogmanger::OnThreadRun() {
     std::vector<tagLogItem*> vecTmp;
     for (;;) {
-        mcCond.Wait();
+#define LOG_WAIT_SEC    2 * 1000 * 1000
+        mcCond.TimedWait(LOG_WAIT_SEC);
         std::queue<tagLogItem*> queTmp;
         if (!mcQueLogItemsMutex.TryLock()) {
             while (!mQueLogItems.empty()) {
@@ -331,6 +332,18 @@ int CLogmanger::OnThreadRun() {
                     } else {
                         fprintf(stderr, "Not find level:%d log\n", pLogItem->iLevel);
                         ++iter;
+                    }
+                }
+            }
+
+            if (queTmp.empty()) {
+                for (std::map<int, std::vector<tagLogItem*>*>::iterator iter_map = mMapFreeLogItems.begin(); iter_map != mMapFreeLogItems.end(); ++iter_map) {
+                    if (!iter_map->second->empty()) {
+                        tagLogItem* pTmpLogItem = iter_map->second->back();
+                        if (pTmpLogItem && pTmpLogItem->iUse > 0) {
+                            queTmp.push(pTmpLogItem);
+                            iter_map->second->pop_back();
+                        }
                     }
                 }
             }
