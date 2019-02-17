@@ -37,6 +37,7 @@
 #include <sys/types.h>   
 #include <arpa/inet.h> 
 #include <errno.h>  
+#include <dirent.h>
 #endif
 
 #endif

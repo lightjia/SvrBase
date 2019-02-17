@@ -470,27 +470,64 @@ int rm_file(const char* pFileName) {
 }
 
 int rm_dir(const char* pDirName) {
-	if (strlen(pDirName) <= 0) {
+	if (!directory_exists(pDirName)) {
+        fprintf(stderr, "Dir:%s Not Exist!\n", pDirName);
 		return 1;
 	}
 
 #if (defined PLATFORM_WINDOWS)
-	_finddata_t dir_info;
-	_finddata_t file_info;
-	intptr_t f_handle;
-	if ((f_handle = _findfirst(pDirName, &dir_info)) != -1)
-	{
-		while (_findnext(f_handle, &file_info) == 0) {
-			if (strcmp(file_info.name, "..") == 0 || strcmp(file_info.name, ".") == 0) {
-				continue;
-			}
+    std::string strPath = pDirName;
+    if (str_end_with(strPath, "\\") || str_end_with(strPath, "/")) {
+        strPath += "*";
+    } else {
+        strPath += "/*";
+    }
 
-			if ((file_info.attrib &_A_SUBDIR) == _A_SUBDIR) {
+    WIN32_FIND_DATAA FindFileData;
+    ZeroMemory(&FindFileData, sizeof(WIN32_FIND_DATAA));
+    HANDLE hFile = FindFirstFileA(strPath.c_str(), &FindFileData);
+    if (hFile && INVALID_HANDLE_VALUE != hFile) {
+        BOOL IsFinded = FALSE;
+        do {
+            if (IsFinded) {
+                if (strcmp(FindFileData.cFileName, ".") && strcmp(FindFileData.cFileName, "..")) {//如果不是"." ".."目录
+                    std::string strFileName = "";
+                    strFileName = strFileName + pDirName + "/" + FindFileData.cFileName;
+                    if (directory_exists(strFileName.c_str())) {//如果是目录，则递归地调用
+                        rm_dir(strFileName.c_str());
+                    }
+                    else {
+                        rm_file(strFileName.c_str());
+                    }
+                }
+            }
 
-			}
-		}
-	}
+            IsFinded = FindNextFileA(hFile, &FindFileData);    //递归搜索其他的文件
+        } while (IsFinded);
+
+        FindClose(hFile);
+    }
+    RemoveDirectoryA(pDirName);
 #elif  (defined PLATFORM_LINUX)
+    DIR *pDir = opendir(pDirName);
+    if (pDir) {
+        struct dirent *dmsg = NULL;
+        while ((dmsg = readdir(pDir)) != NULL){
+            if (strcmp(dmsg->d_name, ".") && strcmp(dmsg->d_name, "..")){
+                std::string strFileName = "";
+                strFileName = strFileName + pDirName + "/" + dmsg->d_name;
+                if (directory_exists(strFileName.c_str())) {//如果是目录，则递归地调用
+                    rm_dir(strFileName.c_str());
+                } else {
+                    rm_file(strFileName.c_str());
+                }
+            }
+        }
+
+        closedir(pDir);
+    }
+
+    rmdir(pDirName);
 #endif
 
 	return 0;
