@@ -229,6 +229,8 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
 		return 1;
 	}
 
+    SetLogType(iType);
+    SetLogLevel(iLevel);
     std::string strLogDir;
 	if (NULL != szDir && strlen(szDir) > 0 && !str_cmp(szDir, ".", true)){
         strLogDir = szDir;
@@ -238,9 +240,6 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
 	}
 
     SetLogPath(strLogDir.c_str());
-    SetLogType(iType);
-    SetLogLevel(iLevel);
-
     Start();
 	mbInit = true;
 	return 0;
