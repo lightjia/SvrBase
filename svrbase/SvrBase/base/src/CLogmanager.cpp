@@ -3,10 +3,10 @@
 #ifdef WIN32
 const static WORD LOG_COLOR[LOG_LEVEL_MAX] = {
     FOREGROUND_RED | FOREGROUND_INTENSITY,
-    0,
-    0,
-    0,
-    0
+    FOREGROUND_INTENSITY,
+    FOREGROUND_INTENSITY,
+    FOREGROUND_INTENSITY,
+    FOREGROUND_INTENSITY
     //FOREGROUND_RED | 
 };
 #else
@@ -28,6 +28,7 @@ CLogmanger::CLogmanger(){
 	miLevel = LOG_LEVEL_ERR;
 	miType = LOG_TYPE_SCREEN;
 	mlCount = 0;
+    miCurrentLogItemNum = 0;
 	mstrDir = "";
 	mbInit = false;
 	mpFile = stdout;
@@ -55,8 +56,7 @@ FILE* CLogmanger::GetFile(){
 
 		strTmp += szFileName;
 		pTmpTile = safe_open_file(strTmp.c_str(), "a+");
-		if (NULL == pTmpTile)
-		{
+		if (NULL == pTmpTile){
 			fprintf(stderr, "open  log file err:%s", strTmp.c_str());
             pTmpTile = stdout;
 		}
@@ -67,8 +67,7 @@ FILE* CLogmanger::GetFile(){
 	return mpFile;
 }
 
-int CLogmanger::Check()
-{
+int CLogmanger::Check(){
 	//文件过大创建新文件
 	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
 		if (mlCount >= MAX_PER_LOGFILE_SIZE){
@@ -188,6 +187,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
             pLogItem = (tagLogItem*)do_malloc(sizeof(tagLogItem));
             pLogItem->pLog = (char*)do_malloc(MAX_PER_LOG_ITEM_CACHE_SIZE * sizeof(char));
             pLogItem->iTotal = MAX_PER_LOG_ITEM_CACHE_SIZE;
+            pLogItem->iUse += sprintf(pLogItem->pLog, "Current Log Item Num:%d\n", ++miCurrentLogItemNum);
             pLogItem->iLevel = iLevel;
             pVecFreeLogItems->push_back(pLogItem);
         }
@@ -244,8 +244,7 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
 	return 0;
 }
 
-int CLogmanger::StopLog()
-{
+int CLogmanger::StopLog(){
 	mbInit = false;
 
 	return 0;
@@ -316,7 +315,18 @@ int CLogmanger::OnThreadRun() {
                 if (pLogItem) {
                     std::map<int, std::vector<tagLogItem*>*>::iterator iter_map = mMapFreeLogItems.find(pLogItem->iLevel);
                     if (iter_map != mMapFreeLogItems.end()) {
-                        iter_map->second->insert(iter_map->second->begin(), pLogItem);
+                        if (!iter_map->second->empty()) {
+                            tagLogItem* pTmpLogItem = iter_map->second->back();
+                            if (pTmpLogItem && pTmpLogItem->iUse > 0){
+                                char* pTmpLogData = pTmpLogItem->pLog;
+                                pTmpLogItem->pLog = pLogItem->pLog;
+                                pLogItem->pLog = pTmpLogData;
+                                pLogItem->iUse = pTmpLogItem->iUse;
+                                pTmpLogItem->iUse = 0;
+                            }
+                        }
+
+                        iter_map->second->push_back(pLogItem);
                         iter = vecTmp.erase(iter);
                     } else {
                         fprintf(stderr, "Not find level:%d log\n", pLogItem->iLevel);

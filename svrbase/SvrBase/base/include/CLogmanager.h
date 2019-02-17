@@ -21,7 +21,7 @@ enum LogLevel{
 };
 
 #define MAX_PER_LOGFILE_SIZE 500*1024*1024	//单个日志文件的大小为500M
-#define MAX_PER_LINE_LOG	1024 * 10	//一行日志最大缓存
+#define MAX_PER_LINE_LOG	1024 * 6	//一行日志最大缓存
 #define MAX_PER_LOG_ITEM_CACHE_SIZE 1024*100 //单个日志项最高缓存
 
 typedef void(*log_cb)(int iLevel, const char *pData);
@@ -69,6 +69,7 @@ private:
     CUvMutex mcConfMutex;
 	CUvMutex mcQueLogItemsMutex;
     std::queue<tagLogItem*> mQueLogItems;
+    unsigned int miCurrentLogItemNum;
     std::map<int, std::vector<tagLogItem*>*> mMapFreeLogItems;
     CUvCond mcCond;
     log_cb mpLogCb;
