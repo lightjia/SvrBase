@@ -57,7 +57,7 @@ FILE* CLogmanger::GetFile(){
 		strTmp += szFileName;
 		pTmpTile = safe_open_file(strTmp.c_str(), "a+");
 		if (NULL == pTmpTile){
-			fprintf(stderr, "open  log file err:%s", strTmp.c_str());
+			fprintf(stderr, "open  log file err:%s\n", strTmp.c_str());
             pTmpTile = stdout;
 		}
 	}
@@ -88,7 +88,9 @@ int CLogmanger::SetLogType(int iType){
 	miType = iType;
     mcConfMutex.UnLock();
 
-	GetFile();
+    if (mbInit) {
+        GetFile();
+    }
 
 	return 0;
 }
@@ -115,7 +117,7 @@ int CLogmanger::SetLogPath(const char* pPath){
     mcConfMutex.UnLock();
 
     if (make_dirs(mstrDir.c_str())){
-        fprintf(stderr, "make_dirs error!");
+        fprintf(stderr, "make_dirs error!\n");
     }
 
 	GetFile();
@@ -227,9 +229,6 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
 		return 1;
 	}
 
-    SetLogType(iType);
-    SetLogLevel(iLevel);
-
     std::string strLogDir;
 	if (NULL != szDir && strlen(szDir) > 0 && !str_cmp(szDir, ".", true)){
         strLogDir = szDir;
@@ -239,6 +238,9 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
 	}
 
     SetLogPath(strLogDir.c_str());
+    SetLogType(iType);
+    SetLogLevel(iLevel);
+
     Start();
 	mbInit = true;
 	return 0;
