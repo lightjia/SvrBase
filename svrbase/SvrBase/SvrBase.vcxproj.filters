@@ -195,6 +195,9 @@
     <ClInclude Include="libuv\include\UvTimer.h">
       <Filter>libuv\include</Filter>
     </ClInclude>
+    <ClInclude Include="libuv\include\UvDl.h">
+      <Filter>libuv\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -309,6 +312,9 @@
       <Filter>openssl\src</Filter>
     </ClCompile>
     <ClCompile Include="libuv\src\UvTimer.cpp">
+      <Filter>libuv\src</Filter>
+    </ClCompile>
+    <ClCompile Include="libuv\src\UvDl.cpp">
       <Filter>libuv\src</Filter>
     </ClCompile>
   </ItemGroup>

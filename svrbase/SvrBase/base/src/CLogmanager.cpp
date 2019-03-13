@@ -144,29 +144,44 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
 		return;
 	}
 
-	char szBuf[MAX_PER_LINE_LOG + 1];
-	memset(szBuf, 0, sizeof(szBuf));
-	int nPos = 0;
-	if (iLevel <= LOG_LEVEL_INFO){
-		struct systemtime_t stNow = get_now_time();
-		nPos = snprintf(szBuf, MAX_PER_LINE_LOG, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
-	}
-	
-	va_list ap;
-	va_start(ap, format);
-#if (defined PLATFORM_WINDOWS)
-	nPos += vsnprintf_s(szBuf + nPos, MAX_PER_LINE_LOG - nPos, _TRUNCATE, format, ap);
-#elif  (defined PLATFORM_LINUX)
-	nPos += vsnprintf(szBuf + nPos, MAX_PER_LINE_LOG - nPos, format, ap);
-#endif
-	va_end(ap);
+    unsigned long lBufferSize = MAX_PER_LINE_LOG;
+    char* pLog = (char*)do_malloc(sizeof(char) * (lBufferSize + 1));
+    unsigned long nPos = 0;
+    if (iLevel <= LOG_LEVEL_INFO) {
+        struct systemtime_t stNow = get_now_time();
+        nPos = snprintf(pLog, MAX_PER_LINE_LOG, "[%02d/%02d/%02d %02d:%02d:%02d.%03d] ", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec, stNow.tmmilliseconds);
+    }
 
-    szBuf[nPos] = '\n';
+    for (;;) {
+        va_list ap;
+        va_start(ap, format);
+        int iTmpPos = 0;
+#if (defined PLATFORM_WINDOWS)
+        iTmpPos = vsnprintf_s(pLog + nPos, lBufferSize - nPos, _TRUNCATE, format, ap);
+#elif  (defined PLATFORM_LINUX)
+        iTmpPos = vsnprintf(pLog + nPos, lBufferSize - nPos, format, ap);
+#endif
+        va_end(ap);
+
+        if (iTmpPos >= 0) {
+            nPos += iTmpPos;
+            break;
+        } else {
+            lBufferSize *= 2;
+            char* pTmpLog = (char*)do_malloc(sizeof(char) * (lBufferSize + 1));
+            memcpy(pTmpLog, pLog, nPos);
+            DOFREE(pLog);
+            pLog = pTmpLog;
+        }
+    }
+
+    pLog[nPos] = '\n';
     nPos++;
     if (mpLogCb) {
-        mpLogCb(iLevel, szBuf);
+        mpLogCb(iLevel, pLog);
     }
-	
+
+    bool bNewLog = true;
     mcQueLogItemsMutex.Lock();
     for (;;) {
         std::vector<tagLogItem*>* pVecFreeLogItems = NULL;
@@ -187,9 +202,17 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
             pLogItem = pVecFreeLogItems->back();
         } else {
             pLogItem = (tagLogItem*)do_malloc(sizeof(tagLogItem));
-            pLogItem->pLog = (char*)do_malloc(MAX_PER_LOG_ITEM_CACHE_SIZE * sizeof(char));
+            pLogItem->pLog = (char*)do_malloc((MAX_PER_LOG_ITEM_CACHE_SIZE) * sizeof(char));
             pLogItem->iTotal = MAX_PER_LOG_ITEM_CACHE_SIZE;
-            pLogItem->iUse += sprintf(pLogItem->pLog, "Current Log Item Num:%d\n", ++miCurrentLogItemNum);
+            char szLogNum[120];
+            int iLogNumLen = sprintf(szLogNum, "Current Log Item Num:%d\n", ++miCurrentLogItemNum);
+            if (bNewLog) {
+                memcpy(pLogItem->pLog, szLogNum, iLogNumLen);
+                pLogItem->iUse += iLogNumLen;
+            } else {
+                memcpy(pLog + nPos, szLogNum, iLogNumLen);
+                nPos += iLogNumLen;
+            }
             pLogItem->iLevel = iLevel;
             pVecFreeLogItems->push_back(pLogItem);
         }
@@ -199,7 +222,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
         }
 
         if (nPos + pLogItem->iUse < pLogItem->iTotal) {
-            memcpy(pLogItem->pLog + pLogItem->iUse, szBuf, nPos);
+            memcpy(pLogItem->pLog + pLogItem->iUse, pLog, nPos);
             pLogItem->iUse += nPos;
 
             if (mQueLogItems.empty()) {
@@ -209,11 +232,21 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
 
             break;
         } else {
+            unsigned long iRest = pLogItem->iTotal - pLogItem->iUse;
+            if (iRest > 0 && iRest < nPos) {
+                bNewLog = false;
+                memcpy(pLogItem->pLog + pLogItem->iUse, pLog, iRest);
+                nPos -= iRest;
+                memmove(pLog, pLog + iRest, nPos);
+                pLogItem->iUse += iRest;
+            }
+
             mQueLogItems.push(pLogItem);
             pVecFreeLogItems->pop_back();
         }
     }
     mcQueLogItemsMutex.UnLock();
+    DOFREE(pLog);
 
     mcCond.Signal();
 }
@@ -264,7 +297,7 @@ void CLogmanger::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
 #endif
     }
 
-    unsigned int iOff = 0;
+    unsigned long iOff = 0;
     while (iOff < pLogItem->iUse) {
         int iWrite = (int)fwrite(pLogItem->pLog + iOff, 1, pLogItem->iUse - iOff, pFile);
         if (iWrite < 0) {

@@ -173,6 +173,7 @@
     <ClInclude Include="libuv\include\UvBase.h" />
     <ClInclude Include="libuv\include\UvCond.h" />
     <ClInclude Include="libuv\include\uvdefine.h" />
+    <ClInclude Include="libuv\include\UvDl.h" />
     <ClInclude Include="libuv\include\UvFile.h" />
     <ClInclude Include="libuv\include\UvLoop.h" />
     <ClInclude Include="libuv\include\UvLoopMgr.h" />
@@ -215,6 +216,7 @@
     <ClCompile Include="libuv\src\UvBarrier.cpp" />
     <ClCompile Include="libuv\src\UvBase.cpp" />
     <ClCompile Include="libuv\src\UvCond.cpp" />
+    <ClCompile Include="libuv\src\UvDl.cpp" />
     <ClCompile Include="libuv\src\UvFile.cpp" />
     <ClCompile Include="libuv\src\UvLoop.cpp" />
     <ClCompile Include="libuv\src\UvLoopMgr.cpp" />

@@ -31,8 +31,8 @@ struct tagLogItem
 {
 	int iLevel;
     char* pLog;
-    unsigned int iUse;
-    unsigned int iTotal;
+    unsigned long iUse;
+    unsigned long iTotal;
 };
 #pragma pack()
 
