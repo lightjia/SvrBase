@@ -10,7 +10,7 @@ CUvTaskThread::~CUvTaskThread(){
 
 int CUvTaskThread::OnThreadRun() {
     for (;;) {
-        if (NULL == mpTask) {
+        if (!mpTask) {
             sUvTaskPool->PushTaskThread(this);
             Wait();
             continue;
@@ -20,7 +20,6 @@ int CUvTaskThread::OnThreadRun() {
         mpTask->TaskExcute();
         mpTask->TaskQuit();
         UNREF(mpTask);
-        mpTask = NULL;
     }
 
     return 0;

@@ -68,10 +68,14 @@ int CUvThread::OnThreadDestroy() {
     return 0;
 }
 
-void CUvThread::Wait() {
-    mcUvSem.Wait();
+void CUvThread::Wait(uint64_t iUsec) {
+    if (iUsec) {
+        mcUvCond.TimedWait(iUsec);
+    } else {
+        mcUvCond.Wait();
+    }
 }
 
 void CUvThread::Activate() {
-    mcUvSem.Post();
+    mcUvCond.Signal();
 }

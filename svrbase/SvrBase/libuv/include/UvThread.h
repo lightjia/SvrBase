@@ -1,7 +1,7 @@
 #ifndef __CUVTHREAD__H_
 #define __CUVTHREAD__H_
 #include "uv.h"
-#include "UvSem.h"
+#include "UvCond.h"
 
 class CUvThread{
 public:
@@ -11,7 +11,7 @@ public:
 public:
     int Start();
     int Quit();
-    void Wait();
+    void Wait(uint64_t iUsec = 0);
     void Activate();
 
 public:
@@ -29,7 +29,7 @@ protected:
 
 private:
     uv_thread_t mstThread;
-    CUvSem mcUvSem;
+    CUvCond mcUvCond;
     bool m_bInit;
 };
 
