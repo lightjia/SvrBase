@@ -29,7 +29,7 @@ do{\
 if (NULL != (X) && (X)->DecRef() <= 0)	\
 {	\
 DODELETE(X);	\
-X = NULL;	\
 }\
+X = NULL;	\
 }while(0)
 #endif
