@@ -1,7 +1,11 @@
 #include "UvMutex.h"
 
-CUvMutex::CUvMutex(){
-    uv_mutex_init(&mstUvMutex);
+CUvMutex::CUvMutex(bool bRecursive){
+    if (bRecursive) {
+        uv_mutex_init_recursive(&mstUvMutex);
+    } else {
+        uv_mutex_init(&mstUvMutex);
+    }
 }
 
 CUvMutex::~CUvMutex(){

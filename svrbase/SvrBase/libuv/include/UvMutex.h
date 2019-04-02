@@ -3,7 +3,7 @@
 #include "uv.h"
 class CUvMutex{
 public:
-    CUvMutex();
+    CUvMutex(bool bRecursive = false);
     ~CUvMutex();
 
 public:
