@@ -3,6 +3,7 @@
 #include "singleton.h"
 #include "UvThread.h"
 #include "UvMutex.h"
+#include "MemOper.h"
 #include <map>
 #include <queue>
 
@@ -25,7 +26,7 @@ struct tagUvTimerParam{
 };
 #pragma pack()
 
-class CUvTimer : public CSingleton<CUvTimer>, public CUvThread{
+class CUvTimer : public CSingleton<CUvTimer>, public CUvThread, public CMemOper{
     SINGLE_CLASS_INITIAL(CUvTimer);
 
 public:

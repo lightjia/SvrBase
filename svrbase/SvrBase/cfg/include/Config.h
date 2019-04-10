@@ -3,8 +3,8 @@
 #include "util.h"
 #include "rapidjsoninc.h"
 #include "confdef.h"
-class CConfig
-{
+#include "MemOper.h"
+class CConfig : public CMemOper{
 public:
 	CConfig();
 	virtual ~CConfig();

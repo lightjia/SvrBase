@@ -6,7 +6,8 @@ CUvBase::CUvBase(){
 }
 
 CUvBase::~CUvBase() {
-    DOFREE(mstUvBuf.pBuf);
+    MemFree(mstUvBuf.pBuf);
+	mstUvBuf.pBuf = NULL;
 }
 
 void CUvBase::UvBufAlloc(uv_handle_t* pStream, size_t iSize, uv_buf_t* pBuf) {
@@ -18,7 +19,7 @@ void CUvBase::UvBufAlloc(uv_handle_t* pStream, size_t iSize, uv_buf_t* pBuf) {
 int CUvBase::Init(ssize_t iBufSize) {
     ASSERT_RET_VALUE(NULL != mpUvLoop, 1);
     if (iBufSize > 0) {
-        mstUvBuf.pBuf = (char*)do_malloc(iBufSize * sizeof(char));
+        mstUvBuf.pBuf = (char*)MemMalloc(iBufSize * sizeof(char));
     }
    
     mstUvBuf.iLen = iBufSize;

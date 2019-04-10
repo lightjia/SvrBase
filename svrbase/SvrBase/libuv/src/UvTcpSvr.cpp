@@ -8,7 +8,7 @@ CUvTcpSvr::~CUvTcpSvr(){
 }
 
 uv_tcp_t* CUvTcpSvr::AllocTcpCli() {
-    uv_tcp_t* pTcpCli = (uv_tcp_t*)do_malloc(sizeof(uv_tcp_t));
+    uv_tcp_t* pTcpCli = (uv_tcp_t*)MemMalloc(sizeof(uv_tcp_t));
     //Can Use Another Loop In SubClass
     uv_tcp_init(GetUvLoop(), pTcpCli);
     return pTcpCli;
@@ -31,7 +31,7 @@ void CUvTcpSvr::ConnCb(uv_stream_t* pHandle, int iStatus){
         }
 
         if (pTcpSvr->OnAccept(pTcpCli) != 0){
-            DOFREE(pTcpCli);
+			pTcpSvr->MemFree(pTcpCli);
         }
     }
 }

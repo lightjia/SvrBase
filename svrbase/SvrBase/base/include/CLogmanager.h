@@ -5,6 +5,7 @@
 #include "UvMutex.h"
 #include "UvThread.h"
 #include "UvCond.h"
+#include "MemOper.h"
 #include <queue>
 #include <string>
 #include <vector>
@@ -36,7 +37,7 @@ struct tagLogItem
 };
 #pragma pack()
 
-class CLogmanger : public CSingleton<CLogmanger>, public CUvThread
+class CLogmanger : public CSingleton<CLogmanger>, public CUvThread, public CMemOper
 {
 	SINGLE_CLASS_INITIAL(CLogmanger);
 

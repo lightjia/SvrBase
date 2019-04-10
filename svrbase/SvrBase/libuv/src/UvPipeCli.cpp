@@ -87,12 +87,12 @@ void CUvPipeCli::SendCb(uv_write_t* pReq, int iStatus) {
         std::map<uv_write_t*, tagUvBufArray>::iterator iter = pPipeCli->mmapSend.find(pReq);
         if (iter != pPipeCli->mmapSend.end()) {
             uv_write_t* pWriteReq = iter->first;
-            DOFREE(pWriteReq);
+			pPipeCli->MemFree(pWriteReq);
             for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
-                DOFREE(iter->second.pBufs[i].base);
+				pPipeCli->MemFree(iter->second.pBufs[i].base);
             }
           
-            DOFREE(iter->second.pBufs);
+			pPipeCli->MemFree(iter->second.pBufs);
             pPipeCli->mmapSend.erase(iter);
         } else {
             LOG_ERR("Can Not Find The WriteReq");
@@ -129,7 +129,7 @@ int CUvPipeCli::DoSend() {
     mcSendMutex.Lock();
     stBufArray.iBufNum = (unsigned int)mqueSendBuf.size();
     if (stBufArray.iBufNum > 0) {
-        stBufArray.pBufs = (uv_buf_t*)do_malloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
+        stBufArray.pBufs = (uv_buf_t*)MemMalloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
         for (unsigned int i = 0; i < stBufArray.iBufNum; ++i){
             uv_buf_t stTmp = mqueSendBuf.front();
             mqueSendBuf.pop();
@@ -143,7 +143,7 @@ int CUvPipeCli::DoSend() {
         return 1;
     }
 
-    uv_write_t* pWriteReq = (uv_write_t*)do_malloc(sizeof(uv_write_t));
+    uv_write_t* pWriteReq = (uv_write_t*)MemMalloc(sizeof(uv_write_t));
     uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
     mmapSend.insert(std::make_pair(pWriteReq, stBufArray));
     return uv_write(pWriteReq, (uv_stream_t*)mpPipeCli, stBufArray.pBufs, stBufArray.iBufNum, CUvPipeCli::SendCb);
@@ -153,7 +153,7 @@ int CUvPipeCli::Send(char* pData, ssize_t iLen) {
     ASSERT_RET_VALUE(pData && iLen > 0 && mpPipeCli && mpUvLoop && uv_is_active((uv_handle_t*)&mstUvSendAsync), 1);
 
     uv_buf_t stTmp;
-    stTmp.base = (char*)do_malloc(iLen);
+    stTmp.base = (char*)MemMalloc(iLen);
     stTmp.len = (unsigned long)iLen;
     memcpy(stTmp.base, pData, iLen);
     mcSendMutex.Lock();
@@ -173,7 +173,7 @@ void CUvPipeCli::CleanSendQueue() {
     mcSendMutex.Lock();
     while (!mqueSendBuf.empty()) {
         uv_buf_t stTmp = mqueSendBuf.front();
-        DOFREE(stTmp.base);
+        MemFree(stTmp.base);
         mqueSendBuf.pop();
     }
     mcSendMutex.UnLock();
@@ -181,12 +181,12 @@ void CUvPipeCli::CleanSendQueue() {
     while (!mmapSend.empty()) {
         std::map<uv_write_t*, tagUvBufArray>::iterator iter = mmapSend.begin();
         uv_write_t* pWriteReq = iter->first;
-        DOFREE(pWriteReq);
+        MemFree(pWriteReq);
         for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
-            DOFREE(iter->second.pBufs[i].base);
+            MemFree(iter->second.pBufs[i].base);
         }
 
-        DOFREE(iter->second.pBufs);
+        MemFree(iter->second.pBufs);
         mmapSend.erase(iter);
     }
 }

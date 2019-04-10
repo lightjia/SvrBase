@@ -23,7 +23,7 @@ int CUvTimer::UnInit() {
         for (std::map<uv_timer_t*, tagUvTimerParam>::iterator iter = mmapTimer.begin(); iter != mmapTimer.end(); ++iter) {
             uv_timer_t* pTimer = iter->first;
             uv_close((uv_handle_t*)pTimer, NULL);
-            DODELETE(pTimer);
+            MemFree(pTimer);
             mmapTimer.erase(iter++);
         }
         mcMapTimerMutex.UnLock();
@@ -90,7 +90,7 @@ void CUvTimer::HandleTimer() {
 
 uvtimer_handle CUvTimer::AddTimer(uint64_t iTimeout, uint64_t iRepeat, uvtimer_cb pCb, void* pParam) {
     ASSERT_RET_VALUE(pCb && mbInit, NULL);
-    uv_timer_t* pTimer = (uv_timer_t*)do_malloc(sizeof(uv_timer_t));
+    uv_timer_t* pTimer = (uv_timer_t*)MemMalloc(sizeof(uv_timer_t));
     tagUvTimerParam stTimer;
     BZERO(stTimer);
     stTimer.iRepeat = iRepeat;

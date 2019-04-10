@@ -145,7 +145,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
 	}
 
     unsigned long lBufferSize = MAX_PER_LINE_LOG;
-    char* pLog = (char*)do_malloc(sizeof(char) * (lBufferSize + 1));
+    char* pLog = (char*)MemMalloc(sizeof(char) * (lBufferSize + 1));
     unsigned long nPos = 0;
     if (iLevel <= LOG_LEVEL_INFO) {
         struct systemtime_t stNow = get_now_time();
@@ -168,9 +168,9 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
             break;
         } else {
             lBufferSize *= 2;
-            char* pTmpLog = (char*)do_malloc(sizeof(char) * (lBufferSize + 1));
+            char* pTmpLog = (char*)MemMalloc(sizeof(char) * (lBufferSize + 1));
             memcpy(pTmpLog, pLog, nPos);
-            DOFREE(pLog);
+            MemFree(pLog);
             pLog = pTmpLog;
         }
     }
@@ -201,8 +201,8 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
         if (!pVecFreeLogItems->empty()) {
             pLogItem = pVecFreeLogItems->back();
         } else {
-            pLogItem = (tagLogItem*)do_malloc(sizeof(tagLogItem));
-            pLogItem->pLog = (char*)do_malloc((MAX_PER_LOG_ITEM_CACHE_SIZE) * sizeof(char));
+            pLogItem = (tagLogItem*)MemMalloc(sizeof(tagLogItem));
+            pLogItem->pLog = (char*)MemMalloc((MAX_PER_LOG_ITEM_CACHE_SIZE) * sizeof(char));
             pLogItem->iTotal = MAX_PER_LOG_ITEM_CACHE_SIZE;
             char szLogNum[120];
             int iLogNumLen = sprintf(szLogNum, "Current Log Item Num:%d\n", ++miCurrentLogItemNum);
@@ -246,7 +246,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
         }
     }
     mcQueLogItemsMutex.UnLock();
-    DOFREE(pLog);
+    MemFree(pLog);
 
     mcCond.Signal();
 }

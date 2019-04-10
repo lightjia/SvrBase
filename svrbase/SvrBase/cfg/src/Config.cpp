@@ -27,7 +27,7 @@ int CConfig::LoadConfig(const char* pFileName, conf_file_type iType){
 	const long lFileLen = get_file_len(pFileName, "r");
 	if (lFileLen > 0){
 		fprintf(stderr, "CConfig::LoadConfig malloc\n");
-		char* pFileData = (char*)do_malloc(lFileLen + 1);
+		char* pFileData = (char*)MemMalloc(lFileLen + 1);
 		size_t iRead = file_read(pFileName, "rb", (unsigned char*)pFileData, lFileLen, 0);
 		if (iRead == lFileLen) {
 			pFileData[iRead] = '\0';
@@ -40,7 +40,7 @@ int CConfig::LoadConfig(const char* pFileName, conf_file_type iType){
 			fprintf(stderr, "File:%s filelen:%ld readlen:%lld", pFileName, lFileLen, iRead);
 		}
 
-		DOFREE(pFileData);
+		MemFree(pFileData);
 	} else {
 		fprintf(stderr, "file:%s is empty", pFileName);
 	}

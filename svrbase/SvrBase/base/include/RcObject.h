@@ -13,7 +13,7 @@ public:
 
 protected:
 	long mlReferCount;
-	CMutex mcRefMutex;
+	CUvMutex mcRefMutex;
 };
 
 #define REF(X) \

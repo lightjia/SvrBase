@@ -41,7 +41,7 @@ int CUvUdp::Send(char* pData, ssize_t iLen, std::string strIp, unsigned short uP
 int CUvUdp::Send(char* pData, ssize_t iLen, const struct sockaddr* pAddr) {
     ASSERT_RET_VALUE(NULL != mpUdp && NULL != mpUvLoop && NULL != pAddr, 1);
     tagUvUdpPkg stTmp;
-    stTmp.stBuf.base = (char*)do_malloc(iLen);
+    stTmp.stBuf.base = (char*)MemMalloc(iLen);
     stTmp.stBuf.len = (unsigned long)iLen;
     memcpy(stTmp.stBuf.base, pData, iLen);
     memcpy(&stTmp.stAddr, pAddr, sizeof(stTmp.stAddr));
@@ -69,12 +69,12 @@ void CUvUdp::SendCb(uv_udp_send_t* pReq, int iStatus) {
         std::map<uv_udp_send_t*, tagUvBufArray>::iterator iter = pUdp->mmapSend.find(pReq);
         if (iter != pUdp->mmapSend.end()) {
             uv_udp_send_t* pWriteReq = iter->first;
-            DOFREE(pWriteReq);
+			pUdp->MemFree(pWriteReq);
             for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
-                DOFREE(iter->second.pBufs[i].base);
+				pUdp->MemFree(iter->second.pBufs[i].base);
             }
 
-            DOFREE(iter->second.pBufs);
+			pUdp->MemFree(iter->second.pBufs);
             pUdp->mmapSend.erase(iter);
         }
         else {
@@ -96,7 +96,7 @@ int CUvUdp::DoSend() {
     mcSendMutex.Lock();
     stBufArray.iBufNum = (unsigned int)mqueSendBuf.size();
     if (stBufArray.iBufNum > 0) {
-        stBufArray.pBufs = (uv_buf_t*)do_malloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
+        stBufArray.pBufs = (uv_buf_t*)MemMalloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
         for (unsigned int i = 0; i < stBufArray.iBufNum; ++i) {
             stTmp = mqueSendBuf.front();
             mqueSendBuf.pop();
@@ -110,7 +110,7 @@ int CUvUdp::DoSend() {
         return 1;
     }
 
-    uv_udp_send_t* pWriteReq = (uv_udp_send_t*)do_malloc(sizeof(uv_udp_send_t));
+    uv_udp_send_t* pWriteReq = (uv_udp_send_t*)MemMalloc(sizeof(uv_udp_send_t));
     uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
     mmapSend.insert(std::make_pair(pWriteReq, stBufArray));
 
@@ -148,7 +148,7 @@ void CUvUdp::CleanSendQueue() {
     mcSendMutex.Lock();
     while (!mqueSendBuf.empty()) {
         tagUvUdpPkg stTmp = mqueSendBuf.front();
-        DOFREE(stTmp.stBuf.base);
+        MemFree(stTmp.stBuf.base);
         mqueSendBuf.pop();
     }
     mcSendMutex.UnLock();
@@ -156,12 +156,12 @@ void CUvUdp::CleanSendQueue() {
     while (!mmapSend.empty()) {
         std::map<uv_udp_send_t*, tagUvBufArray>::iterator iter = mmapSend.begin();
         uv_udp_send_t* pWriteReq = iter->first;
-        DOFREE(pWriteReq);
+        MemFree(pWriteReq);
         for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
-            DOFREE(iter->second.pBufs[i].base);
+            MemFree(iter->second.pBufs[i].base);
         }
 
-        DOFREE(iter->second.pBufs);
+        MemFree(iter->second.pBufs);
         mmapSend.erase(iter);
     }
 }
