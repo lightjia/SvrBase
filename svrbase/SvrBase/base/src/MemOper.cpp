@@ -1,17 +1,17 @@
 #include "MemOper.h"
 
-CMemOper::CMemOper(mem_malloc_func pMalloc, mem_free_func pFree, mem_calloc_func pCalloc, mem_realloc_func pRealloc){
-	SetMemOperFunc(pMalloc, pFree, pCalloc, pRealloc);
+CMemOper::CMemOper(mem_oper_func stMemFunc){
+	SetMemOperFunc(stMemFunc);
 }
 
 CMemOper::~CMemOper(){
 }
 
-void CMemOper::SetMemOperFunc(mem_malloc_func pMalloc, mem_free_func pFree, mem_calloc_func pCalloc, mem_realloc_func pRealloc) {
-	mpMalloc = pMalloc;
-	mpFree = pFree;
-	mpCalloc = pCalloc;
-	mpRealloc = pRealloc;
+void CMemOper::SetMemOperFunc(mem_oper_func stMemFunc) {
+	mpMalloc = stMemFunc.pMallocFunc;
+	mpFree = stMemFunc.pFreeFunc;
+	mpCalloc = stMemFunc.pCallocFunc;
+	mpRealloc = stMemFunc.pReallocFunc;
 }
 
 void* CMemOper::MemMalloc(size_t iLen) {
@@ -47,5 +47,10 @@ void* CMemOper::MemCalloc(size_t count, size_t size) {
 }
 
 void* CMemOper::MemRealloc(void* ptr, size_t size) {
+	void* pRet = NULL;
+	if (mpRealloc && ptr && size > 0) {
+		pRet = mpRealloc(ptr, size);
+	}
 
+	return pRet;
 }

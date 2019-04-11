@@ -40,9 +40,9 @@ float CRandTool::RandFloat(){
 void CRandTool::init_genrand(uint32_t s){
     mt[0] = s & 0xffffffffUL;
 
-    for (mti = 1; mti < N; mti++){
-        mt[mti] = (1812433253UL * (mt[mti - 1] ^ (mt[mti - 1] >> 30)) + mti);
-        mt[mti] &= 0xffffffffUL;
+    for (int i = 1; i < N; i++){
+        mt[i] = (1812433253UL * (mt[i - 1] ^ (mt[i - 1] >> 30)) + i);
+        mt[i] &= 0xffffffffUL;
     }
 }
 
@@ -72,7 +72,7 @@ uint32_t CRandTool::genrand_int32(){
         mti = 0;
     }
 
-    y = (unsigned long)mt[mti++];
+    y = (unsigned long)mt[(mti++) % N];
 
     y ^= (y >> 11);
     y ^= (y << 7) & 0x9d2c5680UL;

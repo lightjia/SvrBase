@@ -204,6 +204,8 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
             pLogItem = (tagLogItem*)MemMalloc(sizeof(tagLogItem));
             pLogItem->pLog = (char*)MemMalloc((MAX_PER_LOG_ITEM_CACHE_SIZE) * sizeof(char));
             pLogItem->iTotal = MAX_PER_LOG_ITEM_CACHE_SIZE;
+			pLogItem->iLevel = iLevel;
+			pLogItem->iUse = 0;
             char szLogNum[120];
             int iLogNumLen = sprintf(szLogNum, "Current Log Item Num:%d\n", ++miCurrentLogItemNum);
             if (bNewLog) {
@@ -213,7 +215,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
                 memcpy(pLog + nPos, szLogNum, iLogNumLen);
                 nPos += iLogNumLen;
             }
-            pLogItem->iLevel = iLevel;
+            
             pVecFreeLogItems->push_back(pLogItem);
         }
 

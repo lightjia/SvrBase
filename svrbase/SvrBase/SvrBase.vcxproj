@@ -164,6 +164,7 @@
     <ClInclude Include="base\include\GuidTool.h" />
     <ClInclude Include="base\include\Idle.h" />
     <ClInclude Include="base\include\LocalDefine.h" />
+    <ClInclude Include="base\include\MemMgr.h" />
     <ClInclude Include="base\include\MemOper.h" />
     <ClInclude Include="base\include\RandTool.h" />
     <ClInclude Include="base\include\RcBuffer.h" />
@@ -215,6 +216,7 @@
     <ClCompile Include="base\src\EventMgr.cpp" />
     <ClCompile Include="base\src\GuidTool.cpp" />
     <ClCompile Include="base\src\Idle.cpp" />
+    <ClCompile Include="base\src\MemMgr.cpp" />
     <ClCompile Include="base\src\MemOper.cpp" />
     <ClCompile Include="base\src\RandTool.cpp" />
     <ClCompile Include="base\src\RcBuffer.cpp" />

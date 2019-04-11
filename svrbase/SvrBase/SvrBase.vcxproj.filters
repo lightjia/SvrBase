@@ -204,8 +204,11 @@
     <ClInclude Include="base\include\RcBuffer.h">
       <Filter>base\include</Filter>
     </ClInclude>
+    <ClInclude Include="base\include\MemMgr.h">
+      <Filter>base\include</Filter>
+    </ClInclude>
     <ClInclude Include="base\include\MemOper.h">
-      <Filter>头文件</Filter>
+      <Filter>base\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -332,8 +335,11 @@
     <ClCompile Include="base\src\RcBuffer.cpp">
       <Filter>base\src</Filter>
     </ClCompile>
+    <ClCompile Include="base\src\MemMgr.cpp">
+      <Filter>base\src</Filter>
+    </ClCompile>
     <ClCompile Include="base\src\MemOper.cpp">
-      <Filter>源文件</Filter>
+      <Filter>base\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

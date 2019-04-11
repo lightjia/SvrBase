@@ -7,13 +7,22 @@ typedef void (*mem_free_func)(void*);
 typedef void* (*mem_calloc_func)(size_t, size_t);
 typedef void* (*mem_realloc_func)(void*, size_t);
 
+struct mem_oper_func {
+	mem_malloc_func  pMallocFunc;
+	mem_free_func pFreeFunc;
+	mem_calloc_func pCallocFunc;
+	mem_realloc_func pReallocFunc;
+};
+
+const struct mem_oper_func DEFAULT_MEM_FUNC = {malloc, free, calloc, realloc};
+
 class CMemOper{
 public:
-	CMemOper(mem_malloc_func pMalloc = malloc, mem_free_func pFree = free, mem_calloc_func pCalloc = calloc, mem_realloc_func pRealloc = realloc);
+	CMemOper(mem_oper_func stMemFunc = DEFAULT_MEM_FUNC);
 	virtual ~CMemOper();
 
 public:
-	void SetMemOperFunc(mem_malloc_func pMalloc, mem_free_func pFree, mem_calloc_func pCalloc, mem_realloc_func pRealloc);
+	void SetMemOperFunc(mem_oper_func stMemFunc);
 
 public:
 	void* MemMalloc(size_t iLen);
