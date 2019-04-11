@@ -107,6 +107,9 @@ void  CMemMgr::DoFree(void* pData) {
 		//printf("Mem Free :%lld\n", iRealLen);
 		if (iRealLen == miAllocMinLimit) {
 			free(pRealData);
+			mpTotalMemMutex->Lock();
+			miTotolMem -= iRealLen;
+			mpTotalMemMutex->UnLock();
 		} else if (iRealLen % miAlign == 0) {
 			std::queue<void*>* pQueTmp = NULL;
 			CUvMutex* pMutex = NULL;
