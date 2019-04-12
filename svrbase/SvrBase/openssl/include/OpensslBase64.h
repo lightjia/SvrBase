@@ -2,7 +2,7 @@
 #define __COPENSSLBASE64__H_
 #include "singleton.h"
 #include "opensslinc.h"
-#include "CLogmanager.h"
+#include "Log.h"
 class COpensslBase64 : public CSingleton<COpensslBase64>{
     SINGLE_CLASS_INITIAL(COpensslBase64);
 public:

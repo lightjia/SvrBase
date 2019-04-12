@@ -1,7 +1,7 @@
 #ifndef __CCOREMGR__H_
 #define __CCOREMGR__H_
 #include "singleton.h"
-#include "CLogmanager.h"
+#include "Log.h"
 
 #if (defined PLATFORM_WINDOWS)
 #include<Windows.h>  

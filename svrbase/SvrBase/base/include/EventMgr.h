@@ -1,8 +1,7 @@
 #ifndef __CEVENTMGR__H_
 #define __CEVENTMGR__H_
 #include "singleton.h"
-#include "CMutex.h"
-#include "CLogmanager.h"
+#include "Log.h"
 #include <string>
 #include <map>
 #include <set>
@@ -24,7 +23,7 @@ public:
 
 private:
     std::map<std::string, std::set<CEventListener*>> mmapEventListeners;
-    CMutex mcMapEventListenersMutex;
+    CUvMutex mcMapEventListenersMutex;
 };
 
 #endif

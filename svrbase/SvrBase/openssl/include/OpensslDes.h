@@ -1,7 +1,7 @@
 #ifndef __COPENSSLDES__H_
 #define __COPENSSLDES__H_
 #include "opensslinc.h"
-#include "CLogmanager.h"
+#include "Log.h"
 class COpensslDes
 {
 public:

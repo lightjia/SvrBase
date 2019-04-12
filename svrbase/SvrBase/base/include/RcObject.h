@@ -1,6 +1,6 @@
 #ifndef __CRCOBJECT__H_
 #define __CRCOBJECT__H_
-#include "CLogmanager.h"
+#include "Log.h"
 class CRcObject
 {
 public:

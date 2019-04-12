@@ -1,7 +1,7 @@
 #ifndef __CUVDL__H_
 #define __CUVDL__H_
 #include "uv.h"
-#include "CLogmanager.h"
+#include "Log.h"
 class CUvDl{
 public:
     CUvDl();

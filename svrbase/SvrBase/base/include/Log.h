@@ -37,13 +37,13 @@ struct tagLogItem
 };
 #pragma pack()
 
-class CLogmanger : public CSingleton<CLogmanger>, public CUvThread, public CMemOper
+class CLog : public CSingleton<CLog>, public CUvThread, public CMemOper
 {
-	SINGLE_CLASS_INITIAL(CLogmanger);
+	SINGLE_CLASS_INITIAL(CLog);
 
 public:
 	int Init(int iType, int iLevel, const char* szDir, log_cb pLogCb=NULL);
-	~CLogmanger();
+	~CLog();
 	void AddLogItem(int iLevel, const char *format, ...);
 	int StopLog();
 	int SetLogType(int iType);
@@ -76,7 +76,7 @@ private:
     log_cb mpLogCb;
 };
 
-#define sLog CLogmanger::Instance()
+#define sLog CLog::Instance()
 
 #define LOG_ERR(fmt, ...) sLog->AddLogItem(LOG_LEVEL_ERR, "[ERROR](%s:%s:%d)[Thread:%u] " fmt, __FILE__, __FUNCTION__, __LINE__, (unsigned int)get_thread_id_self(), ##__VA_ARGS__)
 #define LOG_DBG(fmt, ...) sLog->AddLogItem(LOG_LEVEL_DBG, "[DEBUG](%s:%s:%d)[Thread:%u] " fmt, __FILE__, __FUNCTION__, __LINE__, (unsigned int)get_thread_id_self(), ##__VA_ARGS__)

@@ -1,4 +1,4 @@
-#include "CLogmanager.h"
+#include "Log.h"
 
 #ifdef WIN32
 const static WORD LOG_COLOR[LOG_LEVEL_MAX] = {
@@ -24,7 +24,7 @@ const static char LOG_COLOR[LOG_LEVEL_MAX][50] = {
 };
 #endif
 
-CLogmanger::CLogmanger(){
+CLog::CLog(){
 	miLevel = LOG_LEVEL_ERR;
 	miType = LOG_TYPE_SCREEN;
 	mlCount = 0;
@@ -35,14 +35,14 @@ CLogmanger::CLogmanger(){
     mpLogCb = NULL;
 }
 
-CLogmanger::~CLogmanger(){
+CLog::~CLog(){
 	if (NULL != mpFile){
 		fclose(mpFile);
 		mpFile = NULL;
 	}
 }
 
-FILE* CLogmanger::GetFile(){
+FILE* CLog::GetFile(){
     FILE* pTmpTile = stdout;
 	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
 		struct systemtime_t stNow = get_now_time();
@@ -67,7 +67,7 @@ FILE* CLogmanger::GetFile(){
 	return mpFile;
 }
 
-int CLogmanger::Check(){
+int CLog::Check(){
 	//文件过大创建新文件
 	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
 		if (mlCount >= MAX_PER_LOGFILE_SIZE){
@@ -79,7 +79,7 @@ int CLogmanger::Check(){
 	return 0;
 }
 
-int CLogmanger::SetLogType(int iType){
+int CLog::SetLogType(int iType){
 	if (iType < LOG_TYPE_SCREEN || iType >= LOG_TYPE_MAX){
 		return -1;
 	}
@@ -95,7 +95,7 @@ int CLogmanger::SetLogType(int iType){
 	return 0;
 }
 
-int CLogmanger::SetLogLevel(int iLevel){
+int CLog::SetLogLevel(int iLevel){
 	if (iLevel < LOG_LEVEL_ERR){
 		return -1;
 	}
@@ -107,7 +107,7 @@ int CLogmanger::SetLogLevel(int iLevel){
 	return 0;
 }
 
-int CLogmanger::SetLogPath(const char* pPath){
+int CLog::SetLogPath(const char* pPath){
 	if (NULL == pPath || str_cmp(pPath, mstrDir.c_str(), true)){
 		return 1;
 	}
@@ -124,7 +124,7 @@ int CLogmanger::SetLogPath(const char* pPath){
 	return 0;
 }
 
-int CLogmanger::SetLogFile(FILE* pFile) {
+int CLog::SetLogFile(FILE* pFile) {
     if (pFile) {
         mcConfMutex.Lock();
         if (mpFile && mpFile != stdout) {
@@ -139,7 +139,7 @@ int CLogmanger::SetLogFile(FILE* pFile) {
     return 0;
 }
 
-void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
+void CLog::AddLogItem(int iLevel, const char *format, ...){
 	if (iLevel > miLevel || iLevel > LOG_LEVEL_MAX || !mbInit){
 		return;
 	}
@@ -253,7 +253,7 @@ void CLogmanger::AddLogItem(int iLevel, const char *format, ...){
     mcCond.Signal();
 }
 
-int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
+int CLog::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
   if (NULL != pLogCb){
     mpLogCb = pLogCb;
     mbInit = true;
@@ -280,13 +280,13 @@ int CLogmanger::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
 	return 0;
 }
 
-int CLogmanger::StopLog(){
+int CLog::StopLog(){
 	mbInit = false;
 
 	return 0;
 }
 
-void CLogmanger::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
+void CLog::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
     ASSERT_RET(pLogItem && pLogItem->iUse > 0 && pLogItem->pLog && pFile);
    
     bool bColor = false;
@@ -319,7 +319,7 @@ void CLogmanger::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
     }
 }
 
-int CLogmanger::PrintItem(tagLogItem* pLogItem)
+int CLog::PrintItem(tagLogItem* pLogItem)
 {
     ASSERT_RET_VALUE(pLogItem && mpFile, 1);
 
@@ -335,7 +335,7 @@ int CLogmanger::PrintItem(tagLogItem* pLogItem)
 	return Check();
 }
 
-int CLogmanger::OnThreadRun() {
+int CLog::OnThreadRun() {
     std::vector<tagLogItem*> vecTmp;
     for (;;) {
 #define LOG_WAIT_SEC    2 * 1000 * 1000

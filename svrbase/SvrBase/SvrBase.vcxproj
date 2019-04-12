@@ -155,14 +155,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="base\include\CLogmanager.h" />
-    <ClInclude Include="base\include\CMutex.h" />
+    <ClInclude Include="base\include\Log.h" />
+    <ClInclude Include="base\include\Mutex.h" />
     <ClInclude Include="base\include\common.h" />
     <ClInclude Include="base\include\CoreMgr.h" />
-    <ClInclude Include="base\include\CThread.h" />
     <ClInclude Include="base\include\EventMgr.h" />
     <ClInclude Include="base\include\GuidTool.h" />
-    <ClInclude Include="base\include\Idle.h" />
     <ClInclude Include="base\include\LocalDefine.h" />
     <ClInclude Include="base\include\MemMgr.h" />
     <ClInclude Include="base\include\MemOper.h" />
@@ -209,13 +207,10 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="base\src\CLogmanager.cpp" />
-    <ClCompile Include="base\src\CMutex.cpp" />
+    <ClCompile Include="base\src\Log.cpp" />
     <ClCompile Include="base\src\CoreMgr.cpp" />
-    <ClCompile Include="base\src\CThread.cpp" />
     <ClCompile Include="base\src\EventMgr.cpp" />
     <ClCompile Include="base\src\GuidTool.cpp" />
-    <ClCompile Include="base\src\Idle.cpp" />
     <ClCompile Include="base\src\MemMgr.cpp" />
     <ClCompile Include="base\src\MemOper.cpp" />
     <ClCompile Include="base\src\RandTool.cpp" />

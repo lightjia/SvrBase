@@ -1,6 +1,6 @@
 #ifndef __SINGLETON__H_
 #define __SINGLETON__H_
-#include "CMutex.h"
+#include "UvMutex.h"
 
 #define SINGLE_CLASS_INITIAL(TypeName)	private:\
 	TypeName();\
@@ -40,14 +40,14 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(CSingleton);
 	static T* mpInstance;
 	static CGarbo mcGarbo;  //定义一个静态成员变量，程序结束时，系统会自动调用它的析构函数  
-	static CMutex mcStaticMutex;
+	static CUvMutex mcStaticMutex;
 };
 
 template <typename T>
 T* CSingleton<T>::mpInstance = NULL;
 
 template <typename T>
-CMutex CSingleton<T>::mcStaticMutex;
+CUvMutex CSingleton<T>::mcStaticMutex;
 
 //template <typename T>
 //CSingleton<typename>::CGarbo CSingleton<T>::mcGarbo;

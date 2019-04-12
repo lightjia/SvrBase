@@ -27,19 +27,3 @@ int CUvMutex::TryLock() {
 uv_mutex_t* CUvMutex::GetMutex() {
 	return &mstUvMutex;
 }
-
-CUvAutoMutex::CUvAutoMutex(CUvMutex* pMutex) {
-    mpMutex = pMutex;
-    if (mpMutex) {
-        mpMutex->Lock();
-    }
-}
-
-CUvAutoMutex::CUvAutoMutex() {
-}
-
-CUvAutoMutex::~CUvAutoMutex() {
-    if (mpMutex) {
-        mpMutex->UnLock();
-    }
-}

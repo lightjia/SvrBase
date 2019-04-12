@@ -1,7 +1,7 @@
 #ifndef __COPENSSLRSA__H_
 #define __COPENSSLRSA__H_
 #include "opensslinc.h"
-#include "CLogmanager.h"
+#include "Log.h"
 class COpensslRsa{
 public:
     COpensslRsa();

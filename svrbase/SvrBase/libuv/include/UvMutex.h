@@ -1,7 +1,8 @@
 #ifndef __CUVMUTEX__H_
 #define __CUVMUTEX__H_
 #include "uv.h"
-class CUvMutex{
+#include "Mutex.h"
+class CUvMutex : public CMutex{
 public:
     CUvMutex(bool bRecursive = false);
     ~CUvMutex();
@@ -14,17 +15,5 @@ public:
 
 private:
     uv_mutex_t mstUvMutex;
-};
-
-class CUvAutoMutex {
-public:
-    CUvAutoMutex(CUvMutex* pMutex);
-    ~CUvAutoMutex();
-
-private:
-    CUvAutoMutex();
-
-private:
-    CUvMutex* mpMutex;
 };
 #endif

@@ -2,7 +2,7 @@
 #define __COPENSSLMD5__H_
 #include "singleton.h"
 #include "opensslinc.h"
-#include "CLogmanager.h"
+#include "Log.h"
 class COpensslMd5 : public CSingleton<COpensslMd5>{
     SINGLE_CLASS_INITIAL(COpensslMd5);
 public:

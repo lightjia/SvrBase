@@ -2,7 +2,7 @@
 #define __COPENSSLSHA__H_
 #include "singleton.h"
 #include "opensslinc.h"
-#include "CLogmanager.h"
+#include "Log.h"
 class COpensslSha : public CSingleton<COpensslSha>{
     SINGLE_CLASS_INITIAL(COpensslSha);
 public:

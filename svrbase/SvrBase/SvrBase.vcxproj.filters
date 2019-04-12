@@ -60,25 +60,13 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="base\include\CLogmanager.h">
-      <Filter>base\include</Filter>
-    </ClInclude>
-    <ClInclude Include="base\include\CMutex.h">
-      <Filter>base\include</Filter>
-    </ClInclude>
     <ClInclude Include="base\include\common.h">
       <Filter>base\include</Filter>
     </ClInclude>
     <ClInclude Include="base\include\CoreMgr.h">
       <Filter>base\include</Filter>
     </ClInclude>
-    <ClInclude Include="base\include\CThread.h">
-      <Filter>base\include</Filter>
-    </ClInclude>
     <ClInclude Include="base\include\EventMgr.h">
-      <Filter>base\include</Filter>
-    </ClInclude>
-    <ClInclude Include="base\include\Idle.h">
       <Filter>base\include</Filter>
     </ClInclude>
     <ClInclude Include="base\include\LocalDefine.h">
@@ -210,27 +198,21 @@
     <ClInclude Include="base\include\MemOper.h">
       <Filter>base\include</Filter>
     </ClInclude>
+    <ClInclude Include="base\include\Log.h">
+      <Filter>base\include</Filter>
+    </ClInclude>
+    <ClInclude Include="base\include\Mutex.h">
+      <Filter>base\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\src\CLogmanager.cpp">
-      <Filter>base\src</Filter>
-    </ClCompile>
-    <ClCompile Include="base\src\CMutex.cpp">
-      <Filter>base\src</Filter>
-    </ClCompile>
     <ClCompile Include="base\src\CoreMgr.cpp">
       <Filter>base\src</Filter>
     </ClCompile>
-    <ClCompile Include="base\src\CThread.cpp">
-      <Filter>base\src</Filter>
-    </ClCompile>
     <ClCompile Include="base\src\EventMgr.cpp">
-      <Filter>base\src</Filter>
-    </ClCompile>
-    <ClCompile Include="base\src\Idle.cpp">
       <Filter>base\src</Filter>
     </ClCompile>
     <ClCompile Include="base\src\RcObject.cpp">
@@ -339,6 +321,9 @@
       <Filter>base\src</Filter>
     </ClCompile>
     <ClCompile Include="base\src\MemOper.cpp">
+      <Filter>base\src</Filter>
+    </ClCompile>
+    <ClCompile Include="base\src\Log.cpp">
       <Filter>base\src</Filter>
     </ClCompile>
   </ItemGroup>
