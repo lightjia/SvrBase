@@ -4,10 +4,6 @@
 
 class CMutex{
 public:
-	CMutex();
-	virtual ~CMutex();
-
-public:
 	virtual void Lock() = 0;
 	virtual int TryLock() = 0;
 	virtual void UnLock() = 0;
