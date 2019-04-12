@@ -16,11 +16,6 @@ void* do_malloc(size_t iLen)
 
 	memset(pRet, 0, iLen);
 	
-#if (defined PLATFORM_WINDOWS)
-	fprintf(stderr, "malloc mem:%I64u\n", iLen);
-#elif  (defined PLATFORM_LINUX)
-	fprintf(stderr, "malloc mem:%llu\n", iLen);
-#endif
 	return pRet;
 }
 
