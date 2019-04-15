@@ -44,18 +44,18 @@ int CUvPipeCli::AfterConn() {
 	uv_async_init(mpUvLoop, &mstUvSendAsync, CUvPipeCli::NotifySend);
 	mcSendAsyncMutex.UnLock();
 
-    return 0;
+    return OnConn(0);
 }
 
 void CUvPipeCli::ConnCb(uv_connect_t* pReq, int iStatus) {
     CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pReq);
     if (NULL != pPipeCli) {
-        if (iStatus >= 0) {
-            pPipeCli->AfterConn();
-        }
-
-        pPipeCli->OnConn(iStatus);
-        pPipeCli->DoSend();
+		if (!iStatus) {
+			pPipeCli->AfterConn();
+			pPipeCli->DoSend();
+		} else {
+			pPipeCli->OnConn(iStatus);
+		}
     }
 }
 

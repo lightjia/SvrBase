@@ -62,18 +62,18 @@ int CUvTcpCli::AfterConn() {
     uv_async_init(mpUvLoop, &mstUvSendAsync, CUvTcpCli::NotifySend);
     mcSendAsyncMutex.UnLock();
 
-    return 0;
+    return OnConn(0);
 }
 
 void CUvTcpCli::ConnCb(uv_connect_t* pReq, int iStatus){
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pReq);
     if (NULL != pTcpCli){
-        if (iStatus >= 0) {
-            pTcpCli->AfterConn();
-        }
-
-        pTcpCli->OnConn(iStatus);
-        pTcpCli->DoSend();
+        if (!iStatus) {
+			pTcpCli->AfterConn();
+			pTcpCli->DoSend();
+		} else {
+			pTcpCli->OnConn(iStatus);
+		}
     }
 }
 
