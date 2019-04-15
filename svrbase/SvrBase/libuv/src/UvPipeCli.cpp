@@ -208,6 +208,5 @@ int CUvPipeCli::Close() {
 	mcSendAsyncMutex.UnLock();
 
     uv_close((uv_handle_t*)mpPipeCli, CUvPipeCli::CloseCb);
-    CleanSendQueue();
     return 0;
 }

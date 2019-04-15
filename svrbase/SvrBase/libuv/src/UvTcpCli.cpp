@@ -234,6 +234,5 @@ int CUvTcpCli::Close() {
     mcSendAsyncMutex.UnLock();
 
     uv_close((uv_handle_t*)mpTcpCli, CUvTcpCli::CloseCb);
-    CleanSendQueue();
     return 0;
 }
