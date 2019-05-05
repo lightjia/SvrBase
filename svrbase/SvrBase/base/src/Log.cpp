@@ -163,7 +163,7 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
 #endif
         va_end(ap);
 
-        if (iTmpPos >= 0 && iTmpPos <= lBufferSize) {
+        if (iTmpPos >= 0 && (unsigned long)iTmpPos <= lBufferSize) {
             nPos += iTmpPos;
             break;
         } else {
