@@ -89,6 +89,7 @@ int CLog::SetLogType(int iType){
     mcConfMutex.UnLock();
 
     if (mbInit) {
+		SetLogPath(mstrDir.c_str());
         GetFile();
     }
 
