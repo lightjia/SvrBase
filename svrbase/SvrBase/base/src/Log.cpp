@@ -108,6 +108,10 @@ int CLog::SetLogLevel(int iLevel){
 }
 
 int CLog::SetLogPath(const char* pPath){
+	if (LOG_TYPE_SCREEN == miType) {
+		return 0;
+	}
+
 	if (NULL == pPath || str_cmp(pPath, mstrDir.c_str(), true)){
 		return 1;
 	}
