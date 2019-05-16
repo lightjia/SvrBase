@@ -17,7 +17,7 @@ int CConfig::LoadJsonConf(const char* pData){
 	if (!doc.HasParseError()) {
 		ParseJson(doc);
 	} else {
-		fprintf(stderr, "Parse Json File Error");
+		fprintf(stderr, "Parse Json File Error:%s\n", pData);
 	}
 
 	return 0;
@@ -34,15 +34,16 @@ int CConfig::LoadConfig(const char* pFileName, conf_file_type iType){
 			if (iType == CONF_FILE_TYPE_JSON){
 				LoadJsonConf(pFileData);
 			} else {
-				fprintf(stderr, "error conf type:%d", iType);
+				fprintf(stderr, "error conf type:%d\n", iType);
 			}
 		} else {
-			fprintf(stderr, "File:%s filelen:%ld readlen:%lld", pFileName, lFileLen, iRead);
+			fprintf(stderr, "File:%s filelen:%ld readlen:%lld\n", pFileName, lFileLen, iRead);
 		}
 
 		MemFree(pFileData);
 	} else {
-		fprintf(stderr, "file:%s is empty", pFileName);
+		fprintf(stderr, "file:%s is empty\n", pFileName);
+		return 1;
 	}
 
 	return 0;
