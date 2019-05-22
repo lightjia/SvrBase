@@ -37,7 +37,7 @@ int CConfig::LoadConfig(const char* pFileName, conf_file_type iType){
 				fprintf(stderr, "error conf type:%d\n", iType);
 			}
 		} else {
-			fprintf(stderr, "File:%s filelen:%ld readlen:%lld\n", pFileName, lFileLen, iRead);
+			fprintf(stderr, "File:%s filelen:%ld readlen:%ld\n", pFileName, lFileLen, iRead);
 		}
 
 		MemFree(pFileData);
