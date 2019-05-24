@@ -26,7 +26,7 @@ int CConfig::LoadJsonConf(const char* pData){
 int CConfig::LoadConfig(const char* pFileName, conf_file_type iType){
 	const long lFileLen = get_file_len(pFileName, "r");
 	if (lFileLen > 0){
-		fprintf(stderr, "CConfig::LoadConfig malloc\n");
+		fprintf(stderr, "CConfig::LoadConfig Load:%s\n", pFileName);
 		char* pFileData = (char*)MemMalloc(lFileLen + 1);
 		size_t iRead = file_read(pFileName, "rb", (unsigned char*)pFileData, lFileLen, 0);
 		if (iRead == lFileLen) {
