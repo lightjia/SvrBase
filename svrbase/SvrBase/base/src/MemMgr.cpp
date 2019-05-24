@@ -126,10 +126,10 @@ void  CMemMgr::DoFree(void* pData) {
 				pQueTmp->push(pRealData);
 				pMutex->UnLock();
 			} else {
-				printf("Error Mem Index :%lld\n", iIndex);
+				printf("Error Mem Index :%ld\n", (unsigned long)iIndex);
 			}
 		} else {
-			printf("Error Mem Free :%lld\n", iRealLen);
+			printf("Error Mem Free :%ld\n", (unsigned long)iRealLen);
 		}
 	}
 }
