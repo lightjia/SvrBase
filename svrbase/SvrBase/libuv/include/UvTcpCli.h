@@ -28,7 +28,7 @@ public:
 private:
     void ParseIpPort();
     int AfterConn();
-    int Recv();
+    int StartRecv();
     int DoSend();
     void CleanSendQueue();
 

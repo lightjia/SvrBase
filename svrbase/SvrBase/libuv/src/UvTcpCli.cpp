@@ -60,7 +60,7 @@ void CUvTcpCli::SetTcpCli(uv_tcp_t* pTcpCli) {
 }
 
 int CUvTcpCli::AfterConn() {
-    Recv();
+	StartRecv();
     mcSendAsyncMutex.Lock();
     uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
     uv_async_init(mpUvLoop, &mstUvSendAsync, CUvTcpCli::NotifySend);
@@ -100,10 +100,8 @@ int CUvTcpCli::Connect(std::string strIp, unsigned short sPort){
     return uv_tcp_connect(mpUvConn, mpTcpCli, (struct sockaddr*)&stRemoteAddr, CUvTcpCli::ConnCb);
 }
 
-int CUvTcpCli::Recv() {
-    if (NULL == mpTcpCli || NULL == mpUvLoop) {
-        return 1;
-    }
+int CUvTcpCli::StartRecv() {
+	ASSERT_RET_VALUE(mpTcpCli && mpUvLoop, 1);
 
     int iSockBufLen = (int)(mstUvBuf.iLen - mstUvBuf.iUse);
     uv_recv_buffer_size((uv_handle_t*)mpTcpCli, &iSockBufLen);
@@ -153,10 +151,10 @@ void CUvTcpCli::NotifySend(uv_async_t* pHandle){
 }
 
 int CUvTcpCli::DoSend() {
-	if (uv_is_closing((uv_handle_t*)&mpTcpCli)) {
+	/*if (uv_is_closing((uv_handle_t*)&mpTcpCli)) {
 		LOG_INFO("CUvTcpCli::DoSend() cli :%s is closing", GetNetId().c_str());
 		return 0;
-	}
+	}*/
 
     tagUvBufArray stBufArray;
     BZERO(stBufArray);
@@ -174,7 +172,7 @@ int CUvTcpCli::DoSend() {
     mcSendMutex.UnLock();
 
     if (!stBufArray.iBufNum) {
-        return 1;
+        return 0;
     }
 
     uv_write_t* pWriteReq = (uv_write_t*)MemMalloc(sizeof(uv_write_t));
