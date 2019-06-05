@@ -4,6 +4,13 @@
 #include <queue>
 #include <map>
 #include <vector>
+
+enum UV_TCP_CLI_STATE {
+	UV_TCP_CLI_STATE_NONE,
+	UV_TCP_CLI_STATE_ESTAB,
+	UV_TCP_CLI_STATE_CLOSE,
+};
+
 class CUvTcpCli : public CUvNetBase{
 public:
     CUvTcpCli();
@@ -43,11 +50,11 @@ protected:
     uv_connect_t* mpUvConn;
 
 private:
+	UV_TCP_CLI_STATE miTcpCliState;
 	uint64_t miTotalRecvBytes;
 	uint64_t miTotalSendBytes;
 	uint64_t miNeedSendBytes;
     uv_async_t mstUvSendAsync;
-    CUvMutex mcSendAsyncMutex;
     std::queue<uv_buf_t> mqueSendBuf;
     CUvMutex mcSendMutex;
     std::map<uv_write_t*, tagUvBufArray> mmapSend;
