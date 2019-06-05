@@ -14,8 +14,10 @@ public:
     int SetNetParam(const char* pIp, unsigned short iPort);
     unsigned short GetPort() { return musPort; }
     std::string& GetIp() { return mstrIp; }
+	const std::string& GetNetId() { return mstrNetId; };
 
 protected:
+	std::string mstrNetId;
     unsigned short musPort;
     std::string mstrIp;
     struct sockaddr_in mstLocalAddr;

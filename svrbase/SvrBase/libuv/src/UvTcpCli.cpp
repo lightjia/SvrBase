@@ -3,6 +3,9 @@
 CUvTcpCli::CUvTcpCli(){
     mpTcpCli = NULL;
     mpUvConn = NULL;
+	miTotalSendBytes = 0;
+	miNeedSendBytes = 0;
+	miTotalRecvBytes = 0;
 }
 
 CUvTcpCli::~CUvTcpCli(){
@@ -24,6 +27,7 @@ void CUvTcpCli::RecvCb(uv_stream_t* pHandle, ssize_t nRead, const uv_buf_t* pBuf
             pTcpCli->Close();
             return;
         } else if (nRead > 0) {
+			pTcpCli->miTotalRecvBytes += (unsigned long)nRead;
             pTcpCli->OnRecv(nRead, pBuf);
         }
     }
@@ -108,13 +112,13 @@ int CUvTcpCli::Recv() {
 
 void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (NULL != pTcpCli)
-    {
+    if (NULL != pTcpCli){
         std::map<uv_write_t*, tagUvBufArray>::iterator iter = pTcpCli->mmapSend.find(pReq);
         if (iter != pTcpCli->mmapSend.end()) {
             uv_write_t* pWriteReq = iter->first;
 			pTcpCli->MemFree(pWriteReq);
             for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+				pTcpCli->miTotalSendBytes += iter->second.pBufs[i].len;
 				pTcpCli->MemFree(iter->second.pBufs[i].base);
             }
 
@@ -127,6 +131,7 @@ void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
         pTcpCli->OnSend(iStatus);
         if (iStatus) {
             if (iStatus == UV_ECANCELED) {
+				LOG_ERR("Peer Cancel Send Msg");
                 return;
             }
 
@@ -135,7 +140,9 @@ void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
         } else {
             pTcpCli->DoSend();
         }
-    }
+	} else {
+		LOG_ERR("uv_handle_get_data error");
+	}
 }
 
 void CUvTcpCli::NotifySend(uv_async_t* pHandle){
@@ -147,6 +154,7 @@ void CUvTcpCli::NotifySend(uv_async_t* pHandle){
 
 int CUvTcpCli::DoSend() {
 	if (uv_is_closing((uv_handle_t*)&mpTcpCli)) {
+		LOG_INFO("CUvTcpCli::DoSend() cli :%s is closing", GetNetId().c_str());
 		return 0;
 	}
 
@@ -172,7 +180,12 @@ int CUvTcpCli::DoSend() {
     uv_write_t* pWriteReq = (uv_write_t*)MemMalloc(sizeof(uv_write_t));
     uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
     mmapSend.insert(std::make_pair(pWriteReq, stBufArray));
-    return uv_write(pWriteReq, (uv_stream_t*)mpTcpCli, stBufArray.pBufs, stBufArray.iBufNum, CUvTcpCli::SendCb);
+	int iWriteRet = uv_write(pWriteReq, (uv_stream_t*)mpTcpCli, stBufArray.pBufs, stBufArray.iBufNum, CUvTcpCli::SendCb);
+	if (iWriteRet) {
+		LOG_ERR("uv_write:%s %s", uv_strerror(iWriteRet), uv_err_name(iWriteRet));
+	}
+
+    return iWriteRet;
 }
 
 int CUvTcpCli::Send(char* pData, ssize_t iLen){
@@ -181,6 +194,7 @@ int CUvTcpCli::Send(char* pData, ssize_t iLen){
     uv_buf_t stTmp;
     stTmp.base = (char*)MemMalloc(iLen * sizeof(char));
     stTmp.len = (unsigned long)iLen;
+	miNeedSendBytes += stTmp.len;
     memcpy(stTmp.base, pData, iLen);
     mcSendMutex.Lock();
     mqueSendBuf.push(stTmp);

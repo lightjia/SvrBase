@@ -1,14 +1,14 @@
 #include "UvNetBase.h"
+#include "GuidTool.h"
 
-CUvNetBase::CUvNetBase()
-{
+CUvNetBase::CUvNetBase(){
     mstrIp = "";
     musPort = 0;
     BZERO(mstLocalAddr);
+	mstrNetId = sGuidTool->CreateGuid();
 }
 
-CUvNetBase::~CUvNetBase()
-{
+CUvNetBase::~CUvNetBase(){
 }
 
 int CUvNetBase::SetNetParam(const char* pIp, unsigned short iPort) {

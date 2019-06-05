@@ -21,6 +21,9 @@ public:
     int Connect(std::string strIp, unsigned short sPort);
     int Send(char* pData, ssize_t iLen);
     int Close();
+	uint64_t GetTotalSendBytes() { return miTotalSendBytes; }
+	uint64_t GetTotalRecvBytes() { return miTotalRecvBytes; }
+	uint64_t GetNeedSendBytes() { return miNeedSendBytes; }
 
 private:
     void ParseIpPort();
@@ -40,6 +43,9 @@ protected:
     uv_connect_t* mpUvConn;
 
 private:
+	uint64_t miTotalRecvBytes;
+	uint64_t miTotalSendBytes;
+	uint64_t miNeedSendBytes;
     uv_async_t mstUvSendAsync;
     CUvMutex mcSendAsyncMutex;
     std::queue<uv_buf_t> mqueSendBuf;
