@@ -1,212 +1,229 @@
 #include "UvPipeCli.h"
+enum UV_PIPE_CLI_STATE {
+	UV_PIPE_CLI_STATE_NONE,
+	UV_PIPE_CLI_STATE_ESTAB,
+	UV_PIPE_CLI_STATE_CLOSE,
+};
 
 CUvPipeCli::CUvPipeCli(){
-    mpPipeCli = NULL;
-    mpUvConn = NULL;
+	mpPipeCli = NULL;
+	mpUvConn = NULL;
+	miTotalSendBytes = 0;
+	miNeedSendBytes = 0;
+	miTotalRecvBytes = 0;
+	miTcpCliState = UV_PIPE_CLI_STATE_NONE;
 }
 
 CUvPipeCli::~CUvPipeCli(){
     CleanSendQueue();
 }
 
+void CUvPipeCli::DoRecv(ssize_t nRead, const uv_buf_t* pBuf) {
+	if (nRead == 0) {
+		LOG_DBG("%s recv 0 bytes", GetPipeId().c_str());
+	} else if (nRead < 0) {
+		Close();
+	} else if (nRead > 0) {
+		miTotalRecvBytes += (unsigned long)nRead;
+		OnRecv(nRead, pBuf);
+	}
+}
+
 void CUvPipeCli::RecvCb(uv_stream_t* pHandle, ssize_t nRead, const uv_buf_t* pBuf) {
-    CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (NULL != pPipeCli) {
-        if (nRead == 0) {
-            if (uv_is_closing((uv_handle_t*)pPipeCli->mpPipeCli)) {
-                LOG_ERR("Cli is Closed!");
-            }
-
-            return;
-        }
-
-        if (nRead < 0) {
-            pPipeCli->Close();
-            return;
-        }
-        else if (nRead > 0) {
-            pPipeCli->OnRecv(nRead, pBuf);
-        }
-    }
+	CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pHandle);
+	ASSERT_RET(pPipeCli);
+	pPipeCli->DoRecv(nRead, pBuf);
 }
 
 void CUvPipeCli::SetPipeCli(uv_pipe_t* pPipeCli) {
-    ASSERT_RET(NULL != mpUvLoop);
-    mpPipeCli = pPipeCli;
-    uv_handle_set_data((uv_handle_t*)mpPipeCli, (void*)this);
-    AfterConn();
+	ASSERT_RET(NULL != mpUvLoop);
+	mpPipeCli = pPipeCli;
+	uv_handle_set_data((uv_handle_t*)mpPipeCli, (void*)this);
+	AfterConn();
 }
 
 int CUvPipeCli::AfterConn() {
-    Recv();
-	mcSendAsyncMutex.Lock();
+	StartRecv();
+
+	mcSendMutex.Lock();
 	uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
 	uv_async_init(mpUvLoop, &mstUvSendAsync, CUvPipeCli::NotifySend);
-	mcSendAsyncMutex.UnLock();
+	miTcpCliState = UV_PIPE_CLI_STATE_ESTAB;
+	mcSendMutex.UnLock();
 
-    return OnConn(0);
+	return OnConn(0);
+}
+
+void CUvPipeCli::DoConn(int iStatus) {
+	if (!iStatus) {
+		AfterConn();
+		DoSend();
+	} else {
+		LOG_ERR("uv_tcp_connect error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
+		OnConn(iStatus);
+		uv_close((uv_handle_t*)mpPipeCli, NULL);
+	}
 }
 
 void CUvPipeCli::ConnCb(uv_connect_t* pReq, int iStatus) {
-    CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (NULL != pPipeCli) {
-		if (!iStatus) {
-			pPipeCli->AfterConn();
-			pPipeCli->DoSend();
-		} else {
-			pPipeCli->OnConn(iStatus);
-		}
-    }
+	CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pReq);
+	ASSERT_RET(pPipeCli);
+	pPipeCli->DoConn(iStatus);
 }
 
 int CUvPipeCli::Connect() {
-    ASSERT_RET_VALUE(mpPipeCli && mpUvLoop && mpUvConn, 1);
+	int iRet = 1;
+	ASSERT_RET_VALUE(mpPipeCli && mpUvLoop && mpUvConn, iRet);
 
-    uv_handle_set_data((uv_handle_t*)mpPipeCli, (void*)this);
-    uv_pipe_init(GetUvLoop(), mpPipeCli, miIpc);
+	uv_handle_set_data((uv_handle_t*)mpPipeCli, (void*)this);
+	iRet = uv_pipe_init(GetUvLoop(), mpPipeCli, miIpc);
+	if (iRet) {
+		LOG_ERR("uv_pipe_init error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+	}
 
-    uv_handle_set_data((uv_handle_t*)mpUvConn, (void*)this);
-    uv_pipe_connect(mpUvConn, mpPipeCli, mstrPipeName.c_str(), CUvPipeCli::ConnCb);
-    return 0;
+	uv_handle_set_data((uv_handle_t*)mpUvConn, (void*)this);
+	uv_pipe_connect(mpUvConn, mpPipeCli, mstrPipeName.c_str(), CUvPipeCli::ConnCb);
+
+	return iRet;
 }
 
-int CUvPipeCli::Recv() {
-    if (NULL == mpPipeCli || NULL == mpUvLoop) {
-        return 1;
-    }
+int CUvPipeCli::StartRecv() {
+	ASSERT_RET_VALUE(mpPipeCli && mpUvLoop, 1);
 
-    int iSockBufLen = (int)(mstUvBuf.iLen - mstUvBuf.iUse);
-    uv_recv_buffer_size((uv_handle_t*)mpPipeCli, &iSockBufLen);
-    return uv_read_start((uv_stream_t*)mpPipeCli, CUvBase::UvBufAlloc, CUvPipeCli::RecvCb);
+	int iSockBufLen = (int)(mstUvBuf.iLen - mstUvBuf.iUse);
+	uv_recv_buffer_size((uv_handle_t*)mpPipeCli, &iSockBufLen);
+	return uv_read_start((uv_stream_t*)mpPipeCli, CUvBase::UvBufAlloc, CUvPipeCli::RecvCb);
+}
+
+void CUvPipeCli::AfterSend(uv_write_t* pReq, int iStatus) {
+	std::map<uv_write_t*, tagUvBufArray>::iterator iter = mmapSend.find(pReq);
+	if (iter != mmapSend.end()) {
+		uv_write_t* pWriteReq = iter->first;
+		MemFree(pWriteReq);
+		for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+			miTotalSendBytes += iter->second.pBufs[i].len;
+			MemFree(iter->second.pBufs[i].base);
+		}
+
+		MemFree(iter->second.pBufs);
+		mmapSend.erase(iter);
+	} else {
+		LOG_ERR("Can Not Find The WriteReq");
+	}
+
+	OnSend(iStatus);
+	if (iStatus) {
+		if (iStatus == UV_ECANCELED) {
+			LOG_ERR("Peer Cancel Send Msg");
+			return;
+		}
+
+		LOG_ERR("uv_write:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
+		Close();
+	}
+	else {
+		DoSend();
+	}
 }
 
 void CUvPipeCli::SendCb(uv_write_t* pReq, int iStatus) {
-    CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (NULL != pPipeCli)
-    {
-        std::map<uv_write_t*, tagUvBufArray>::iterator iter = pPipeCli->mmapSend.find(pReq);
-        if (iter != pPipeCli->mmapSend.end()) {
-            uv_write_t* pWriteReq = iter->first;
-			pPipeCli->MemFree(pWriteReq);
-            for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
-				pPipeCli->MemFree(iter->second.pBufs[i].base);
-            }
-          
-			pPipeCli->MemFree(iter->second.pBufs);
-            pPipeCli->mmapSend.erase(iter);
-        } else {
-            LOG_ERR("Can Not Find The WriteReq");
-        }
-
-        pPipeCli->OnSend(iStatus);
-        if (iStatus) {
-            if (iStatus == UV_ECANCELED) {
-                return;
-            }
-
-			LOG_ERR("uv_write:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
-            pPipeCli->Close();
-        } else {
-            pPipeCli->DoSend();
-        }
-    }
+	CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pReq);
+	ASSERT_RET(pPipeCli);
+	pPipeCli->AfterSend(pReq, iStatus);
 }
 
 void CUvPipeCli::NotifySend(uv_async_t* pHandle) {
-    CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (NULL != pPipeCli) {
-        pPipeCli->DoSend();
-    }
+	CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pHandle);
+	if (NULL != pPipeCli) {
+		pPipeCli->DoSend();
+	}
 }
 
 int CUvPipeCli::DoSend() {
-	if (uv_is_closing((uv_handle_t*)&mpPipeCli)) {
-		return 0;
+	CAutoMutex cAutoMutex(&mcSendMutex);
+	if (UV_PIPE_CLI_STATE_ESTAB == miTcpCliState) {
+		tagUvBufArray stBufArray;
+		BZERO(stBufArray);
+		stBufArray.iBufNum = (unsigned int)mqueSendBuf.size();
+		if (stBufArray.iBufNum > 0) {
+			stBufArray.pBufs = (uv_buf_t*)MemMalloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
+			for (unsigned int i = 0; i < stBufArray.iBufNum; ++i) {
+				uv_buf_t stTmp = mqueSendBuf.front();
+				mqueSendBuf.pop();
+				stBufArray.pBufs[i].base = stTmp.base;
+				stBufArray.pBufs[i].len = stTmp.len;
+			}
+		}
+
+
+		if (stBufArray.iBufNum > 0) {
+			uv_write_t* pWriteReq = (uv_write_t*)MemMalloc(sizeof(uv_write_t));
+			uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
+			mmapSend.insert(std::make_pair(pWriteReq, stBufArray));
+			int iWriteRet = uv_write(pWriteReq, (uv_stream_t*)mpPipeCli, stBufArray.pBufs, stBufArray.iBufNum, CUvPipeCli::SendCb);
+			if (iWriteRet) {
+				LOG_ERR("uv_write:%s %s", uv_strerror(iWriteRet), uv_err_name(iWriteRet));
+			}
+		}
 	}
 
-    tagUvBufArray stBufArray;
-    BZERO(stBufArray);
-    mcSendMutex.Lock();
-    stBufArray.iBufNum = (unsigned int)mqueSendBuf.size();
-    if (stBufArray.iBufNum > 0) {
-        stBufArray.pBufs = (uv_buf_t*)MemMalloc(sizeof(uv_buf_t) * stBufArray.iBufNum);
-        for (unsigned int i = 0; i < stBufArray.iBufNum; ++i){
-            uv_buf_t stTmp = mqueSendBuf.front();
-            mqueSendBuf.pop();
-            stBufArray.pBufs[i].base = stTmp.base;
-            stBufArray.pBufs[i].len = stTmp.len;
-        }
-    }
-    mcSendMutex.UnLock();
-
-    if (!stBufArray.iBufNum) {
-        return 1;
-    }
-
-    uv_write_t* pWriteReq = (uv_write_t*)MemMalloc(sizeof(uv_write_t));
-    uv_handle_set_data((uv_handle_t*)pWriteReq, (void*)this);
-    mmapSend.insert(std::make_pair(pWriteReq, stBufArray));
-    return uv_write(pWriteReq, (uv_stream_t*)mpPipeCli, stBufArray.pBufs, stBufArray.iBufNum, CUvPipeCli::SendCb);
+	return 0;
 }
 
 int CUvPipeCli::Send(char* pData, ssize_t iLen) {
-    ASSERT_RET_VALUE(pData && iLen > 0 && mpPipeCli && mpUvLoop && uv_is_active((uv_handle_t*)&mstUvSendAsync), 1);
+	ASSERT_RET_VALUE(pData && iLen > 0 && mpPipeCli && mpUvLoop && UV_PIPE_CLI_STATE_CLOSE != miTcpCliState, 1);
 
-    uv_buf_t stTmp;
-    stTmp.base = (char*)MemMalloc(iLen);
-    stTmp.len = (unsigned long)iLen;
-    memcpy(stTmp.base, pData, iLen);
-    mcSendMutex.Lock();
-    mqueSendBuf.push(stTmp);
-    mcSendMutex.UnLock();
-
-	mcSendAsyncMutex.Lock();
-	if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
+	uv_buf_t stTmp;
+	stTmp.base = (char*)MemMalloc(iLen * sizeof(char));
+	stTmp.len = (unsigned long)iLen;
+	miNeedSendBytes += stTmp.len;
+	memcpy(stTmp.base, pData, iLen);
+	CAutoMutex cAutoMutex(&mcSendMutex);
+	mqueSendBuf.push(stTmp);
+	if (UV_PIPE_CLI_STATE_ESTAB == miTcpCliState) {
 		uv_async_send(&mstUvSendAsync);
 	}
-	mcSendAsyncMutex.UnLock();
 
-    return 0;
+	return 0;
 }
 
 void CUvPipeCli::CleanSendQueue() {
-    mcSendMutex.Lock();
-    while (!mqueSendBuf.empty()) {
-        uv_buf_t stTmp = mqueSendBuf.front();
-        MemFree(stTmp.base);
-        mqueSendBuf.pop();
-    }
-    mcSendMutex.UnLock();
+	CAutoMutex cAutoMutex(&mcSendMutex);
+	while (!mqueSendBuf.empty()) {
+		uv_buf_t stTmp = mqueSendBuf.front();
+		MemFree(stTmp.base);
+		mqueSendBuf.pop();
+	}
 
-    while (!mmapSend.empty()) {
-        std::map<uv_write_t*, tagUvBufArray>::iterator iter = mmapSend.begin();
-        uv_write_t* pWriteReq = iter->first;
-        MemFree(pWriteReq);
-        for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
-            MemFree(iter->second.pBufs[i].base);
-        }
+	while (!mmapSend.empty()) {
+		std::map<uv_write_t*, tagUvBufArray>::iterator iter = mmapSend.begin();
+		uv_write_t* pWriteReq = iter->first;
+		MemFree(pWriteReq);
+		for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+			MemFree(iter->second.pBufs[i].base);
+		}
 
-        MemFree(iter->second.pBufs);
-        mmapSend.erase(iter);
-    }
+		MemFree(iter->second.pBufs);
+		mmapSend.erase(iter);
+	}
 }
 
 void CUvPipeCli::CloseCb(uv_handle_t* pHandle) {
-    CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (NULL != pPipeCli) {
-        pPipeCli->OnClose();
-    }
+	CUvPipeCli* pPipeCli = (CUvPipeCli*)uv_handle_get_data((uv_handle_t*)pHandle);
+	if (pPipeCli) {
+		pPipeCli->OnClose();
+		//use uv_is_active to panduan
+		uv_close((uv_handle_t*)&pPipeCli->mstUvSendAsync, NULL);
+	}
 }
 
 int CUvPipeCli::Close() {
-    ASSERT_RET_VALUE(mpUvLoop && mpPipeCli && !uv_is_closing((uv_handle_t*)mpPipeCli), 1);
-
-	mcSendAsyncMutex.Lock();
-	if (uv_is_active((uv_handle_t*)&mstUvSendAsync)) {
-		uv_close((uv_handle_t*)&mstUvSendAsync, NULL);
+	ASSERT_RET_VALUE(mpPipeCli && mpUvLoop, 1);
+	CAutoMutex cAutoMutex(&mcSendMutex);
+	if (UV_PIPE_CLI_STATE_ESTAB == miTcpCliState) {
+		uv_close((uv_handle_t*)mpPipeCli, CUvPipeCli::CloseCb);
+		miTcpCliState = UV_PIPE_CLI_STATE_CLOSE;
 	}
-	mcSendAsyncMutex.UnLock();
 
-    uv_close((uv_handle_t*)mpPipeCli, CUvPipeCli::CloseCb);
-    return 0;
+	return 0;
 }

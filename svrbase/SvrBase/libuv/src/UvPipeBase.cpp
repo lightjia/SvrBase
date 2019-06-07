@@ -1,9 +1,9 @@
 #include "UvPipeBase.h"
-
+#include "GuidTool.h"
 CUvPipeBase::CUvPipeBase(){
     miIpc = 0;
+	strPipeId = sGuidTool->CreateGuid();
 }
-
 
 CUvPipeBase::~CUvPipeBase(){
 }

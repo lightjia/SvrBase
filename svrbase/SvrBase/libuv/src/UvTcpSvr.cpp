@@ -14,38 +14,48 @@ uv_tcp_t* CUvTcpSvr::AllocTcpCli() {
     return pTcpCli;
 }
 
+void CUvTcpSvr::DoConn(int iStatus) {
+	if (iStatus) {
+		LOG_ERR("uv_conn error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
+		return;
+	}
+
+	uv_tcp_t* pTcpCli = AllocTcpCli();
+	ASSERT_RET(NULL != pTcpCli);
+	int iRet = uv_accept((uv_stream_t*)mpTcpSvr, (uv_stream_t*)pTcpCli);
+	if (iRet) {
+		LOG_ERR("uv_accept error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+		return;
+	}
+
+	if (OnAccept(pTcpCli)) {
+		MemFree(pTcpCli);
+	}
+}
+
 void CUvTcpSvr::ConnCb(uv_stream_t* pHandle, int iStatus){
     CUvTcpSvr* pTcpSvr = (CUvTcpSvr*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (NULL != pTcpSvr){
-        if (iStatus){
-            LOG_ERR("uv_conn error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
-            return;
-        }
-
-        uv_tcp_t* pTcpCli = pTcpSvr->AllocTcpCli();
-        ASSERT_RET(NULL != pTcpCli);
-        int iRet = uv_accept((uv_stream_t*)pTcpSvr->mpTcpSvr, (uv_stream_t*)pTcpCli);
-        if (iRet){
-            LOG_ERR("uv_accept error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
-            return;
-        }
-
-        if (pTcpSvr->OnAccept(pTcpCli) != 0){
-			pTcpSvr->MemFree(pTcpCli);
-        }
-    }
+	ASSERT_RET(pTcpSvr);
+	pTcpSvr->DoConn(iStatus);
 }
 
 int CUvTcpSvr::Listen(int iBackLog){
-    ASSERT_RET_VALUE(mpUvLoop && mpTcpSvr, 1);
+	int iRet = 1;
+    ASSERT_RET_VALUE(mpUvLoop && mpTcpSvr, iRet);
 
     uv_handle_set_data((uv_handle_t*)mpTcpSvr, (void*)this);
     uv_tcp_init(mpUvLoop, mpTcpSvr);
-    int iRet = uv_tcp_bind(mpTcpSvr, (struct sockaddr*)&mstLocalAddr, SO_REUSEADDR);
+    iRet = uv_tcp_bind(mpTcpSvr, (struct sockaddr*)&mstLocalAddr, SO_REUSEADDR);
     if (iRet){
         LOG_ERR("uv_tcp_bind error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
-        return 1;
+        return iRet;
     }
 
-    return uv_listen((uv_stream_t*)mpTcpSvr, iBackLog, CUvTcpSvr::ConnCb);
+	iRet = uv_listen((uv_stream_t*)mpTcpSvr, iBackLog, CUvTcpSvr::ConnCb);
+	if (iRet) {
+		LOG_ERR("uv_listen error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+		uv_close((uv_handle_t*)mpTcpSvr, NULL);
+	}
+
+	return iRet;
 }

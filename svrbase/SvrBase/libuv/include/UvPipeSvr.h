@@ -16,6 +16,9 @@ protected:
 protected:
     int Listen(int iBackLog = 5);
 
+private:
+	void DoConn(int iStatus);
+
 protected:
     uv_pipe_t* mpPipeSvr;
 };

@@ -168,7 +168,7 @@ void CUvTcpCli::NotifySend(uv_async_t* pHandle){
 }
 
 int CUvTcpCli::DoSend() {
-    mcSendMutex.Lock();
+	CAutoMutex cAutoMutex(&mcSendMutex);
 	if (UV_TCP_CLI_STATE_ESTAB == miTcpCliState) {
 		tagUvBufArray stBufArray;
 		BZERO(stBufArray);
@@ -194,7 +194,6 @@ int CUvTcpCli::DoSend() {
 			}
 		}
 	}
-	mcSendMutex.UnLock();
 
     return 0;
 }
@@ -207,18 +206,17 @@ int CUvTcpCli::Send(char* pData, ssize_t iLen){
     stTmp.len = (unsigned long)iLen;
 	miNeedSendBytes += stTmp.len;
     memcpy(stTmp.base, pData, iLen);
-    mcSendMutex.Lock();
+	CAutoMutex cAutoMutex(&mcSendMutex);
     mqueSendBuf.push(stTmp);
 	if (UV_TCP_CLI_STATE_ESTAB == miTcpCliState) {
 		uv_async_send(&mstUvSendAsync);
 	}
-    mcSendMutex.UnLock();
 
     return 0;
 }
 
 void CUvTcpCli::CleanSendQueue(){
-    mcSendMutex.Lock();
+	CAutoMutex cAutoMutex(&mcSendMutex);
     while (!mqueSendBuf.empty()){
         uv_buf_t stTmp = mqueSendBuf.front();
         MemFree(stTmp.base);
@@ -236,8 +234,6 @@ void CUvTcpCli::CleanSendQueue(){
         MemFree(iter->second.pBufs);
         mmapSend.erase(iter);
     }
-
-	mcSendMutex.UnLock();
 }
 
 void CUvTcpCli::CloseCb(uv_handle_t* pHandle){
@@ -251,12 +247,11 @@ void CUvTcpCli::CloseCb(uv_handle_t* pHandle){
 
 int CUvTcpCli::Close() {
     ASSERT_RET_VALUE(mpTcpCli && mpUvLoop, 1);
-	mcSendMutex.Lock();
+	CAutoMutex cAutoMutex(&mcSendMutex);
 	if (UV_TCP_CLI_STATE_ESTAB == miTcpCliState) {
 		uv_close((uv_handle_t*)mpTcpCli, CUvTcpCli::CloseCb);
 		miTcpCliState = UV_TCP_CLI_STATE_CLOSE;
 	}
-	mcSendMutex.UnLock();
 
     return 0;
 }
