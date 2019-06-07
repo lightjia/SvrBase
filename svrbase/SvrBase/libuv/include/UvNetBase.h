@@ -17,10 +17,12 @@ public:
 	const std::string& GetNetId() { return mstrNetId; };
 
 protected:
-	std::string mstrNetId;
     unsigned short musPort;
     std::string mstrIp;
     struct sockaddr_in mstLocalAddr;
+
+private:
+	std::string mstrNetId;
 };
 
 #endif

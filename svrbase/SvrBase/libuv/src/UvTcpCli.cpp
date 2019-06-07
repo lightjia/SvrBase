@@ -1,5 +1,11 @@
 #include "UvTcpCli.h"
 
+enum UV_TCP_CLI_STATE {
+	UV_TCP_CLI_STATE_NONE,
+	UV_TCP_CLI_STATE_ESTAB,
+	UV_TCP_CLI_STATE_CLOSE,
+};
+
 CUvTcpCli::CUvTcpCli(){
     mpTcpCli = NULL;
     mpUvConn = NULL;
@@ -13,29 +19,25 @@ CUvTcpCli::~CUvTcpCli(){
     CleanSendQueue();
 }
 
+void CUvTcpCli::DoRecv(ssize_t nRead, const uv_buf_t* pBuf) {
+	if (nRead == 0) {
+		LOG_DBG("%s recv 0 bytes", GetNetId().c_str());
+	} else if (nRead < 0) {
+		Close();
+	} else if (nRead > 0) {
+		miTotalRecvBytes += (unsigned long)nRead;
+		OnRecv(nRead, pBuf);
+	}
+}
+
 void CUvTcpCli::RecvCb(uv_stream_t* pHandle, ssize_t nRead, const uv_buf_t* pBuf){
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pHandle);
-    if (NULL != pTcpCli){
-        if (nRead == 0){
-            if (uv_is_closing((uv_handle_t*)pTcpCli->mpTcpCli)){
-                LOG_ERR("Cli is Closed!");
-            }
-
-            return;
-        }
-        
-        if (nRead < 0) {
-            pTcpCli->Close();
-            return;
-        } else if (nRead > 0) {
-			pTcpCli->miTotalRecvBytes += (unsigned long)nRead;
-            pTcpCli->OnRecv(nRead, pBuf);
-        }
-    }
+	ASSERT_RET(pTcpCli);
+	pTcpCli->DoRecv(nRead, pBuf);
 }
 
 void CUvTcpCli::ParseIpPort() {
-    ASSERT_RET(NULL != mpTcpCli);
+    ASSERT_RET(mpTcpCli);
     struct sockaddr stSock;
     int iSockNameLen = (int)sizeof(stSock);
     uv_tcp_getpeername(mpTcpCli, &stSock, &iSockNameLen);
@@ -62,44 +64,56 @@ void CUvTcpCli::SetTcpCli(uv_tcp_t* pTcpCli) {
 
 int CUvTcpCli::AfterConn() {
 	StartRecv();
+
+	mcSendMutex.Lock();
     uv_handle_set_data((uv_handle_t*)&mstUvSendAsync, (void*)this);
     uv_async_init(mpUvLoop, &mstUvSendAsync, CUvTcpCli::NotifySend);
-	mcSendMutex.Lock();
 	miTcpCliState = UV_TCP_CLI_STATE_ESTAB;
 	mcSendMutex.UnLock();
 
     return OnConn(0);
 }
 
+void CUvTcpCli::DoConn(int iStatus) {
+	if (!iStatus) {
+		AfterConn();
+		DoSend();
+	} else {
+		LOG_ERR("uv_tcp_connect error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
+		OnConn(iStatus);
+		uv_close((uv_handle_t*)mpTcpCli, NULL);
+	}
+}
+
 void CUvTcpCli::ConnCb(uv_connect_t* pReq, int iStatus){
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (NULL != pTcpCli){
-        if (!iStatus) {
-			pTcpCli->AfterConn();
-			pTcpCli->DoSend();
-		} else {
-			pTcpCli->OnConn(iStatus);
-		}
-    }
+	ASSERT_RET(pTcpCli);
+	pTcpCli->DoConn(iStatus);
 }
 
 int CUvTcpCli::Connect(std::string strIp, unsigned short sPort){
-    ASSERT_RET_VALUE(mpTcpCli && mpUvLoop && mpUvConn, 1);
+	int iRet = 1;
+    ASSERT_RET_VALUE(mpTcpCli && mpUvLoop && mpUvConn, iRet);
 
     uv_handle_set_data((uv_handle_t*)mpTcpCli, (void*)this);
     uv_tcp_init(mpUvLoop, mpTcpCli);
     if (musPort > 0) {
-        int iRet = uv_tcp_bind(mpTcpCli, (struct sockaddr*)&mstLocalAddr, SO_REUSEADDR);
+        iRet = uv_tcp_bind(mpTcpCli, (struct sockaddr*)&mstLocalAddr, SO_REUSEADDR);
         if (iRet){
             LOG_ERR("uv_tcp_bind error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
-            return 1;
+            return iRet;
         }
     }
 
     struct sockaddr_in stRemoteAddr;
     uv_ip4_addr(strIp.c_str(), sPort, &stRemoteAddr);
     uv_handle_set_data((uv_handle_t*)mpUvConn, (void*)this);
-    return uv_tcp_connect(mpUvConn, mpTcpCli, (struct sockaddr*)&stRemoteAddr, CUvTcpCli::ConnCb);
+	iRet = uv_tcp_connect(mpUvConn, mpTcpCli, (struct sockaddr*)&stRemoteAddr, CUvTcpCli::ConnCb);
+	if (iRet) {
+		LOG_ERR("uv_tcp_connect error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+	}
+
+    return iRet;
 }
 
 int CUvTcpCli::StartRecv() {
@@ -110,39 +124,40 @@ int CUvTcpCli::StartRecv() {
     return uv_read_start((uv_stream_t*)mpTcpCli, CUvBase::UvBufAlloc, CUvTcpCli::RecvCb);
 }
 
+void CUvTcpCli::AfterSend(uv_write_t* pReq, int iStatus) {
+	std::map<uv_write_t*, tagUvBufArray>::iterator iter = mmapSend.find(pReq);
+	if (iter != mmapSend.end()) {
+		uv_write_t* pWriteReq = iter->first;
+		MemFree(pWriteReq);
+		for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
+			miTotalSendBytes += iter->second.pBufs[i].len;
+			MemFree(iter->second.pBufs[i].base);
+		}
+
+		MemFree(iter->second.pBufs);
+		mmapSend.erase(iter);
+	} else {
+		LOG_ERR("Can Not Find The WriteReq");
+	}
+
+	OnSend(iStatus);
+	if (iStatus) {
+		if (iStatus == UV_ECANCELED) {
+			LOG_ERR("Peer Cancel Send Msg");
+			return;
+		}
+
+		LOG_ERR("uv_write:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
+		Close();
+	} else {
+		DoSend();
+	}
+}
+
 void CUvTcpCli::SendCb(uv_write_t* pReq, int iStatus) {
     CUvTcpCli* pTcpCli = (CUvTcpCli*)uv_handle_get_data((uv_handle_t*)pReq);
-    if (NULL != pTcpCli){
-        std::map<uv_write_t*, tagUvBufArray>::iterator iter = pTcpCli->mmapSend.find(pReq);
-        if (iter != pTcpCli->mmapSend.end()) {
-            uv_write_t* pWriteReq = iter->first;
-			pTcpCli->MemFree(pWriteReq);
-            for (unsigned int i = 0; i < iter->second.iBufNum; ++i) {
-				pTcpCli->miTotalSendBytes += iter->second.pBufs[i].len;
-				pTcpCli->MemFree(iter->second.pBufs[i].base);
-            }
-
-			pTcpCli->MemFree(iter->second.pBufs);
-            pTcpCli->mmapSend.erase(iter);
-        } else {
-            LOG_ERR("Can Not Find The WriteReq");
-        }
-
-        pTcpCli->OnSend(iStatus);
-        if (iStatus) {
-            if (iStatus == UV_ECANCELED) {
-				LOG_ERR("Peer Cancel Send Msg");
-                return;
-            }
-
-            LOG_ERR("uv_write:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
-            pTcpCli->Close();
-        } else {
-            pTcpCli->DoSend();
-        }
-	} else {
-		LOG_ERR("uv_handle_get_data error");
-	}
+	ASSERT_RET(pTcpCli);
+	pTcpCli->AfterSend(pReq, iStatus);
 }
 
 void CUvTcpCli::NotifySend(uv_async_t* pHandle){

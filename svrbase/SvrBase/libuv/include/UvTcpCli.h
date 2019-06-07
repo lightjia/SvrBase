@@ -5,12 +5,6 @@
 #include <map>
 #include <vector>
 
-enum UV_TCP_CLI_STATE {
-	UV_TCP_CLI_STATE_NONE,
-	UV_TCP_CLI_STATE_ESTAB,
-	UV_TCP_CLI_STATE_CLOSE,
-};
-
 class CUvTcpCli : public CUvNetBase{
 public:
     CUvTcpCli();
@@ -37,6 +31,9 @@ private:
     int AfterConn();
     int StartRecv();
     int DoSend();
+	void DoConn(int iStatus);
+	void DoRecv(ssize_t nRead, const uv_buf_t* pBuf);
+	void AfterSend(uv_write_t* pReq, int iStatus);
     void CleanSendQueue();
 
 protected:
@@ -50,7 +47,7 @@ protected:
     uv_connect_t* mpUvConn;
 
 private:
-	UV_TCP_CLI_STATE miTcpCliState;
+	int miTcpCliState;
 	uint64_t miTotalRecvBytes;
 	uint64_t miTotalSendBytes;
 	uint64_t miNeedSendBytes;
