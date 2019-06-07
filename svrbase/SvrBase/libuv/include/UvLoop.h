@@ -23,6 +23,7 @@ public:
 public:
     int CallUv(CUvLoopCb* pUvLoopCb, void* pCbData = NULL);
 	int StartLoop();
+	const int GetFdNum() { return miBakFdNum; }
 
 public:
     static void AsyncCb(uv_async_t* pHandle);
