@@ -96,9 +96,6 @@
     <ClInclude Include="libuv\include\UvLoop.h">
       <Filter>libuv\include</Filter>
     </ClInclude>
-    <ClInclude Include="libuv\include\UvLoopMgr.h">
-      <Filter>libuv\include</Filter>
-    </ClInclude>
     <ClInclude Include="libuv\include\UvMutex.h">
       <Filter>libuv\include</Filter>
     </ClInclude>
@@ -228,9 +225,6 @@
       <Filter>libuv\src</Filter>
     </ClCompile>
     <ClCompile Include="libuv\src\UvLoop.cpp">
-      <Filter>libuv\src</Filter>
-    </ClCompile>
-    <ClCompile Include="libuv\src\UvLoopMgr.cpp">
       <Filter>libuv\src</Filter>
     </ClCompile>
     <ClCompile Include="libuv\src\UvMutex.cpp">

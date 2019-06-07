@@ -181,7 +181,6 @@
     <ClInclude Include="libuv\include\UvDl.h" />
     <ClInclude Include="libuv\include\UvFile.h" />
     <ClInclude Include="libuv\include\UvLoop.h" />
-    <ClInclude Include="libuv\include\UvLoopMgr.h" />
     <ClInclude Include="libuv\include\UvMutex.h" />
     <ClInclude Include="libuv\include\UvNetBase.h" />
     <ClInclude Include="libuv\include\UvPipeBase.h" />
@@ -225,7 +224,6 @@
     <ClCompile Include="libuv\src\UvDl.cpp" />
     <ClCompile Include="libuv\src\UvFile.cpp" />
     <ClCompile Include="libuv\src\UvLoop.cpp" />
-    <ClCompile Include="libuv\src\UvLoopMgr.cpp" />
     <ClCompile Include="libuv\src\UvMutex.cpp" />
     <ClCompile Include="libuv\src\UvNetBase.cpp" />
     <ClCompile Include="libuv\src\UvPipeBase.cpp" />
