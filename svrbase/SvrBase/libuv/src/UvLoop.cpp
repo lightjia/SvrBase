@@ -28,10 +28,18 @@ void CUvLoop::AsyncCb(uv_async_t* pHandle) {
 }
 
 void CUvLoop::UvCb() {
-	CAutoMutex cAutoMutex(&mcUvLoopCbsMutex);
+	std::queue<tagUvLoopCb> queTmp;
+	mcUvLoopCbsMutex.Lock();
 	while (!mqueUvLoopCbs.empty()) {
 		tagUvLoopCb stTmp = mqueUvLoopCbs.front();
 		mqueUvLoopCbs.pop();
+		queTmp.push(stTmp);
+	}
+	mcUvLoopCbsMutex.UnLock();
+
+	while (!queTmp.empty()) {
+		tagUvLoopCb stTmp = queTmp.front();
+		queTmp.pop();
 		if (stTmp.pUvLoopCb) {
 			stTmp.pUvLoopCb->UvCallBack(mpUvLoop, stTmp.pCbData);
 			UNREF(stTmp.pUvLoopCb);
