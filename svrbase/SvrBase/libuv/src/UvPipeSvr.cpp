@@ -66,6 +66,7 @@ int CUvPipeSvr::Listen(int iBackLog) {
 	iRet = uv_pipe_bind(mpPipeSvr, mstrPipeName.c_str());
 	if (iRet) {
 		LOG_ERR("uv_pipe_bind error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+		uv_close((uv_handle_t*)mpPipeSvr, NULL);
 		return iRet;
 	}
 
