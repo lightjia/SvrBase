@@ -31,6 +31,7 @@ void CUvLoop::UvCb() {
 	CAutoMutex cAutoMutex(&mcUvLoopCbsMutex);
 	while (!mqueUvLoopCbs.empty()) {
 		tagUvLoopCb stTmp = mqueUvLoopCbs.front();
+		mqueUvLoopCbs.pop();
 		if (stTmp.pUvLoopCb) {
 			stTmp.pUvLoopCb->UvCallBack(mpUvLoop, stTmp.pCbData);
 			UNREF(stTmp.pUvLoopCb);
