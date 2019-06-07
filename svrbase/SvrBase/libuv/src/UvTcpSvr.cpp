@@ -48,6 +48,7 @@ int CUvTcpSvr::Listen(int iBackLog){
     iRet = uv_tcp_bind(mpTcpSvr, (struct sockaddr*)&mstLocalAddr, SO_REUSEADDR);
     if (iRet){
         LOG_ERR("uv_tcp_bind error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+		uv_close((uv_handle_t*)mpTcpSvr, NULL);
         return iRet;
     }
 
