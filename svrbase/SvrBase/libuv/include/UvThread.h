@@ -20,9 +20,7 @@ public:
 protected:
     virtual int OnThreadRun() = 0;
     virtual int OnThreadCreate();
-    virtual int OnThreadBeforeQuit();
     virtual int OnThreadQuit();
-    virtual int OnThreadDestroy();
 
 protected:
     bool mbQuit;

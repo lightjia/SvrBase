@@ -39,10 +39,8 @@ int CUvThread::Start() {
 int CUvThread::Quit() {
     mbQuit = true;
     if (mbUvThreadInit) {
-        OnThreadBeforeQuit();
         uv_thread_join(&mstThread);
         mbUvThreadInit = false;
-        return OnThreadDestroy();
     }
 
     return 0;
@@ -52,15 +50,7 @@ int CUvThread::OnThreadCreate() {
     return 0;
 }
 
-int CUvThread::OnThreadBeforeQuit() {
-    return 0;
-}
-
 int CUvThread::OnThreadQuit() {
-    return 0;
-}
-
-int CUvThread::OnThreadDestroy() {
     return 0;
 }
 
