@@ -25,8 +25,8 @@ enum LogLevel{
 #define MAX_PER_LINE_LOG	1024 * 6	//一行日志最大缓存
 #define MAX_PER_LOG_ITEM_CACHE_SIZE 1024*100 //单个日志项最高缓存
 
-typedef void(*log_cb)(int iLevel, const char *pData);
-
+typedef void (*log_cb)(int iLevel, const char *pData);
+typedef void(*log_file_change_cb)(const std::string&);
 #pragma pack(1)
 struct tagLogItem
 {
@@ -35,20 +35,36 @@ struct tagLogItem
     unsigned long iUse;
     unsigned long iTotal;
 };
+
+struct tagLogInitParam {
+	tagLogInitParam() {
+		iLogType = LOG_TYPE_TEE;
+		iLogLevel = LOG_LEVEL_MAX;
+		strLogDir = "";
+		pLogCb = NULL;
+		pLogFileChangeCb = NULL;
+	}
+
+	LogType iLogType;
+	LogLevel iLogLevel;
+	std::string strLogDir;
+	log_cb pLogCb;
+	log_file_change_cb pLogFileChangeCb;
+};
 #pragma pack()
 
-class CLog : public CSingleton<CLog>, public CUvThread, public CMemOper
-{
+class CLog : public CSingleton<CLog>, public CUvThread, public CMemOper{
 	SINGLE_CLASS_INITIAL(CLog);
 
 public:
-	int Init(int iType, int iLevel, const char* szDir, log_cb pLogCb=NULL);
+	int Init(const tagLogInitParam& stLogParam);
 	~CLog();
 	void AddLogItem(int iLevel, const char *format, ...);
 	int StopLog();
 	int SetLogType(int iType);
 	int SetLogLevel(int iLevel);
 	int SetLogPath(const char* pPath);
+	uint64_t GetTotalLogLen() { return miTotalCount; }
 
 protected:
     int OnThreadRun();
@@ -61,11 +77,10 @@ private:
     void WriteLog(tagLogItem* pLogItem, FILE* pFile);
 
 private:
-	int miType;
-	int miLevel;
-	unsigned long mlCount;
+	tagLogInitParam mstLogParam;
+	unsigned long mlCurFileCount;
+	uint64_t miTotalCount;
 	bool mbInit;
-	std::string mstrDir;
 	FILE* mpFile;
     CUvMutex mcConfMutex;
 	CUvMutex mcQueLogItemsMutex;
@@ -73,7 +88,6 @@ private:
     unsigned int miCurrentLogItemNum;
     std::map<int, std::vector<tagLogItem*>*> mMapFreeLogItems;
     CUvCond mcCond;
-    log_cb mpLogCb;
 };
 
 #define sLog CLog::Instance()

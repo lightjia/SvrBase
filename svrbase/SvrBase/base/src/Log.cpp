@@ -25,14 +25,11 @@ const static char LOG_COLOR[LOG_LEVEL_MAX][50] = {
 #endif
 
 CLog::CLog(){
-	miLevel = LOG_LEVEL_ERR;
-	miType = LOG_TYPE_SCREEN;
-	mlCount = 0;
+	mlCurFileCount = 0;
     miCurrentLogItemNum = 0;
-	mstrDir = "";
+	miTotalCount = 0;
 	mbInit = false;
 	mpFile = stdout;
-    mpLogCb = NULL;
 }
 
 CLog::~CLog(){
@@ -44,13 +41,12 @@ CLog::~CLog(){
 
 FILE* CLog::GetFile(){
     FILE* pTmpTile = stdout;
-	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
+	if (mstLogParam.iLogType == LOG_TYPE_FILE || mstLogParam.iLogType == LOG_TYPE_TEE){
 		struct systemtime_t stNow = get_now_time();
 		char szFileName[1000];
 		snprintf(szFileName, 1000, "%02d-%02d-%02d-%02d-%02d-%02d.log", stNow.tmyear, stNow.tmmon, stNow.tmmday, stNow.tmhour, stNow.tmmin, stNow.tmsec);
-		std::string strTmp = mstrDir;
-		if (!str_end_with(strTmp, "\\") && !str_end_with(strTmp, "/"))
-		{
+		std::string strTmp = mstLogParam.strLogDir;
+		if (!str_end_with(strTmp, "\\") && !str_end_with(strTmp, "/")){
 			strTmp += "/";
 		}
 
@@ -59,6 +55,10 @@ FILE* CLog::GetFile(){
 		if (NULL == pTmpTile){
 			fprintf(stderr, "open  log file err:%s\n", strTmp.c_str());
             pTmpTile = stdout;
+		} else {
+			if (mstLogParam.pLogFileChangeCb) {
+				mstLogParam.pLogFileChangeCb(strTmp);
+			}
 		}
 	}
 	
@@ -69,9 +69,9 @@ FILE* CLog::GetFile(){
 
 int CLog::Check(){
 	//文件过大创建新文件
-	if (miType == LOG_TYPE_FILE || miType == LOG_TYPE_TEE){
-		if (mlCount >= MAX_PER_LOGFILE_SIZE){
-				mlCount = 0;
+	if (mstLogParam.iLogType == LOG_TYPE_FILE || mstLogParam.iLogType == LOG_TYPE_TEE){
+		if (mlCurFileCount >= MAX_PER_LOGFILE_SIZE){
+				mlCurFileCount = 0;
 				GetFile();
 		}
 	}
@@ -81,49 +81,42 @@ int CLog::Check(){
 
 int CLog::SetLogType(int iType){
 	if (iType < LOG_TYPE_SCREEN || iType >= LOG_TYPE_MAX){
-		return -1;
+		fprintf(stderr, "SetLogType:%d error", iType);
+		return 1;
 	}
 
     mcConfMutex.Lock();
-	miType = iType;
+	mstLogParam.iLogType = (LogType)iType;
     mcConfMutex.UnLock();
-
-    if (mbInit) {
-		SetLogPath(mstrDir.c_str());
-        GetFile();
-    }
 
 	return 0;
 }
 
 int CLog::SetLogLevel(int iLevel){
-	if (iLevel < LOG_LEVEL_ERR){
-		return -1;
+	if (iLevel < LOG_LEVEL_ERR || iLevel > LOG_LEVEL_MAX){
+		fprintf(stderr, "SetLogLevel:%d error", iLevel);
+		return 1;
 	}
 
     mcConfMutex.Lock();
-	miLevel = iLevel;
+	mstLogParam.iLogLevel = (LogLevel)iLevel;
     mcConfMutex.UnLock();
 
 	return 0;
 }
 
 int CLog::SetLogPath(const char* pPath){
-	if (LOG_TYPE_SCREEN == miType) {
+	if (LOG_TYPE_SCREEN == mstLogParam.iLogType || !pPath) {
 		return 0;
 	}
 
-	if (NULL == pPath || str_cmp(pPath, mstrDir.c_str(), true)){
+    mcConfMutex.Lock();
+	if (make_dirs(pPath)) {
+		fprintf(stderr, "make_dirs error:%s!\n", pPath);
 		return 1;
 	}
-
-    mcConfMutex.Lock();
-	mstrDir = pPath;
+	mstLogParam.strLogDir = pPath;
     mcConfMutex.UnLock();
-
-    if (make_dirs(mstrDir.c_str())){
-        fprintf(stderr, "make_dirs error!\n");
-    }
 
 	GetFile();
 	return 0;
@@ -145,7 +138,8 @@ int CLog::SetLogFile(FILE* pFile) {
 }
 
 void CLog::AddLogItem(int iLevel, const char *format, ...){
-	if (iLevel > miLevel || iLevel > LOG_LEVEL_MAX || !mbInit){
+	if (iLevel > mstLogParam.iLogLevel || iLevel > LOG_LEVEL_MAX || !mbInit){
+		fprintf(stderr, "UnKnow LogLevel:%d Or Not Init\n", iLevel);
 		return;
 	}
 
@@ -182,10 +176,11 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
 
     pLog[nPos] = '\n';
     nPos++;
-    if (mpLogCb) {
-        mpLogCb(iLevel, pLog);
+    if (mstLogParam.pLogCb) {
+		mstLogParam.pLogCb(iLevel, pLog);
     }
 
+	miTotalCount += nPos;
     bool bNewLog = true;
     mcQueLogItemsMutex.Lock();
     for (;;) {
@@ -258,30 +253,25 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
     mcCond.Signal();
 }
 
-int CLog::Init(int iType, int iLevel, const char* szDir, log_cb pLogCb){
-  if (NULL != pLogCb){
-    mpLogCb = pLogCb;
-    mbInit = true;
-    return 0;
-  }
+int CLog::Init(const tagLogInitParam& stLogParam){
+	if (!mbInit) {
+		mstLogParam.iLogLevel = stLogParam.iLogLevel;
+		mstLogParam.iLogType = stLogParam.iLogType;
+		mstLogParam.strLogDir = stLogParam.strLogDir;
+		mstLogParam.pLogCb = stLogParam.pLogCb;
+		mstLogParam.pLogFileChangeCb = stLogParam.pLogFileChangeCb;
+		SetLogType(mstLogParam.iLogType);
+		SetLogLevel(mstLogParam.iLogLevel);
+		if (mstLogParam.strLogDir.empty() || str_cmp(mstLogParam.strLogDir.c_str(), ".", true)) {
+			mstLogParam.strLogDir = get_app_path();
+			mstLogParam.strLogDir += "log";
+		}
 
-	if (mbInit){
-		return 1;
+		SetLogPath(mstLogParam.strLogDir.c_str());
+		Start();
+		mbInit = true;
 	}
 
-    SetLogType(iType);
-    SetLogLevel(iLevel);
-    std::string strLogDir;
-	if (NULL != szDir && strlen(szDir) > 0 && !str_cmp(szDir, ".", true)){
-        strLogDir = szDir;
-	} else {
-        strLogDir = get_app_path();
-        strLogDir += "log";
-	}
-
-    SetLogPath(strLogDir.c_str());
-    Start();
-	mbInit = true;
 	return 0;
 }
 
@@ -324,17 +314,15 @@ void CLog::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
     }
 }
 
-int CLog::PrintItem(tagLogItem* pLogItem)
-{
+int CLog::PrintItem(tagLogItem* pLogItem){
     ASSERT_RET_VALUE(pLogItem && mpFile, 1);
 
     WriteLog(pLogItem, mpFile);
-    if (miType == LOG_TYPE_TEE && mpFile != stdout)
-    {
+    if (mstLogParam.iLogType == LOG_TYPE_TEE && mpFile != stdout){
         WriteLog(pLogItem, stdout);
     }
 
-    mlCount += pLogItem->iUse;
+    mlCurFileCount += pLogItem->iUse;
     pLogItem->iUse = 0;
     memset(pLogItem->pLog, 0, pLogItem->iTotal);
 	return Check();
