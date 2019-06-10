@@ -14,6 +14,12 @@ uv_tcp_t* CUvTcpSvr::AllocTcpCli() {
     return pTcpCli;
 }
 
+int CUvTcpSvr::FreeTcpCli(uv_tcp_t* pTcpCli) {
+	ASSERT_RET_VALUE(pTcpCli && mpUvLoop, 1);
+	uv_close((uv_handle_t*)pTcpCli, NULL);
+	return 0;
+}
+
 void CUvTcpSvr::DoConn(int iStatus) {
 	if (iStatus) {
 		LOG_ERR("uv_conn error:%s %s", uv_strerror(iStatus), uv_err_name(iStatus));
@@ -25,6 +31,7 @@ void CUvTcpSvr::DoConn(int iStatus) {
 	int iRet = uv_accept((uv_stream_t*)mpTcpSvr, (uv_stream_t*)pTcpCli);
 	if (iRet) {
 		LOG_ERR("uv_accept error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+		FreeTcpCli(pTcpCli);
 		return;
 	}
 
