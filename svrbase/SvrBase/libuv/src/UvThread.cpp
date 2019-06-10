@@ -2,7 +2,7 @@
 #include "Log.h"
 
 CUvThread::CUvThread(){
-    m_bInit = false;
+    mbUvThreadInit = false;
     mbQuit = false;
 }
 
@@ -14,7 +14,7 @@ void CUvThread::ThreadEntry(void *pParam) {
     if (NULL != pParam) {
         CUvThread* pUvThread = reinterpret_cast<CUvThread*>(pParam);
         if (NULL != pUvThread) {
-            pUvThread->m_bInit = true;
+            pUvThread->mbUvThreadInit = true;
             pUvThread->OnThreadRun();
             pUvThread->OnThreadQuit();
         }
@@ -22,14 +22,14 @@ void CUvThread::ThreadEntry(void *pParam) {
 }
 
 int CUvThread::Start() {
-    ASSERT_RET_VALUE(m_bInit == false, 1);
+    ASSERT_RET_VALUE(mbUvThreadInit == false, 1);
     OnThreadCreate();
     if (uv_thread_create(&mstThread, CUvThread::ThreadEntry, (void*)this) != 0){
         LOG_ERR("uv_thread_create error");
         return 1;
     }
 
-    while (!m_bInit) {
+    while (!mbUvThreadInit) {
         sleep_ms(10);
     }
 
@@ -38,10 +38,10 @@ int CUvThread::Start() {
 
 int CUvThread::Quit() {
     mbQuit = true;
-    if (m_bInit) {
+    if (mbUvThreadInit) {
         OnThreadBeforeQuit();
         uv_thread_join(&mstThread);
-        m_bInit = false;
+        mbUvThreadInit = false;
         return OnThreadDestroy();
     }
 
@@ -49,33 +49,29 @@ int CUvThread::Quit() {
 }
 
 int CUvThread::OnThreadCreate() {
-    LOG_INFO("Enter CUvThread::OnThreadCreate");
     return 0;
 }
 
 int CUvThread::OnThreadBeforeQuit() {
-    LOG_INFO("Enter CUvThread::OnThreadBeforeQuit");
     return 0;
 }
 
 int CUvThread::OnThreadQuit() {
-    LOG_INFO("Enter CUvThread::OnThreadQuit");
     return 0;
 }
 
 int CUvThread::OnThreadDestroy() {
-    LOG_INFO("Enter CUvThread::OnThreadDestroy");
     return 0;
 }
 
 void CUvThread::Wait(uint64_t iUsec) {
     if (iUsec) {
-        mcUvCond.TimedWait(iUsec);
+        mcUvThreadCond.TimedWait(iUsec);
     } else {
-        mcUvCond.Wait();
+        mcUvThreadCond.Wait();
     }
 }
 
 void CUvThread::Activate() {
-    mcUvCond.Signal();
+    mcUvThreadCond.Signal();
 }

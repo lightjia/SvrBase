@@ -29,8 +29,8 @@ protected:
 
 private:
     uv_thread_t mstThread;
-    CUvCond mcUvCond;
-    bool m_bInit;
+    CUvCond mcUvThreadCond;
+    bool mbUvThreadInit;
 };
 
 #endif
