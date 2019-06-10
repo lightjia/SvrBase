@@ -1,9 +1,20 @@
 #include "UvLoop.h"
 #include "Log.h"
 
-CUvLoop::CUvLoop(){
-	mpUvLoop = NULL;
+CUvLoop::CUvLoop(uv_run_mode iRunMode, uv_loop_t* pUvLoop){
     miBakFdNum = 0;
+	miUvRunMode = UV_RUN_DEFAULT;
+	if (iRunMode >= UV_RUN_DEFAULT && iRunMode <= UV_RUN_NOWAIT) {
+		miUvRunMode = iRunMode;
+	}
+
+	if (pUvLoop) {
+		mpUvLoop = pUvLoop;
+	} else {
+		if (!uv_loop_init(&mstUvLoop)) {
+			mpUvLoop = &mstUvLoop;
+		}
+	}
 }
 
 CUvLoop::~CUvLoop(){
@@ -14,8 +25,7 @@ CUvLoop::~CUvLoop(){
 }
 
 int CUvLoop::StartLoop() {
-	ASSERT_RET_VALUE(!mpUvLoop && !uv_loop_init(&mstUvLoop), 1);
-	mpUvLoop = &mstUvLoop;
+	ASSERT_RET_VALUE(!mpUvLoop, 1);
 	uv_handle_set_data((uv_handle_t*)&mstUvAsync, (void*)this);
 	uv_async_init(mpUvLoop, &mstUvAsync, CUvLoop::AsyncCb);
 	return Start();
@@ -66,5 +76,5 @@ int CUvLoop::OnThreadRun() {
     ASSERT_RET_VALUE(NULL != mpUvLoop, 1);
     
     //always run 
-    return uv_run(mpUvLoop, UV_RUN_DEFAULT);
+    return uv_run(mpUvLoop, miUvRunMode);
 }

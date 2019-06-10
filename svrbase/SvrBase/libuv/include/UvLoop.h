@@ -17,13 +17,14 @@ struct tagUvLoopCb {
 
 class CUvLoop : public CUvThread{
 public:
-    CUvLoop();
+    CUvLoop(uv_run_mode iRunMode = UV_RUN_DEFAULT, uv_loop_t* pUvLoop = NULL);
     ~CUvLoop();
 
 public:
     int CallUv(CUvLoopCb* pUvLoopCb, void* pCbData = NULL);
 	int StartLoop();
 	const int GetFdNum() { return miBakFdNum; }
+	uv_loop_t* GetUvLoop() { return mpUvLoop; }
 
 public:
     static void AsyncCb(uv_async_t* pHandle);
@@ -36,7 +37,8 @@ private:
 
 private:
 	uv_loop_t *mpUvLoop;
-    uv_loop_t mstUvLoop;
+	uv_loop_t mstUvLoop;
+	uv_run_mode miUvRunMode;
     uv_async_t mstUvAsync;
     int miBakFdNum;
     std::queue<tagUvLoopCb> mqueUvLoopCbs;
