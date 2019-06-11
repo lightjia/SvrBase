@@ -18,14 +18,14 @@ CUvLoop::CUvLoop(uv_run_mode iRunMode, uv_loop_t* pUvLoop){
 }
 
 CUvLoop::~CUvLoop(){
-    if (NULL != mpUvLoop) {
+    if (mpUvLoop) {
         uv_loop_close(mpUvLoop);
         mpUvLoop = NULL;
     }
 }
 
 int CUvLoop::StartLoop() {
-	ASSERT_RET_VALUE(!mpUvLoop, 1);
+	ASSERT_RET_VALUE(mpUvLoop, 1);
 	uv_handle_set_data((uv_handle_t*)&mstUvAsync, (void*)this);
 	uv_async_init(mpUvLoop, &mstUvAsync, CUvLoop::AsyncCb);
 	return Start();
@@ -73,7 +73,7 @@ int CUvLoop::CallUv(CUvLoopCb* pUvLoopCb, void* pCbData) {
 }
 
 int CUvLoop::OnThreadRun() {
-    ASSERT_RET_VALUE(NULL != mpUvLoop, 1);
+    ASSERT_RET_VALUE(mpUvLoop, 1);
     
     //always run 
     return uv_run(mpUvLoop, miUvRunMode);
