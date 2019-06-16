@@ -180,9 +180,9 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
 		mstLogParam.pLogCb(iLevel, pLog);
     }
 
-	miTotalCount += nPos;
     bool bNewLog = true;
     mcQueLogItemsMutex.Lock();
+	miTotalCount += nPos;
     for (;;) {
         std::vector<tagLogItem*>* pVecFreeLogItems = NULL;
         std::map<int, std::vector<tagLogItem*>*>::iterator iter = mMapFreeLogItems.find(iLevel);
