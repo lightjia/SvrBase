@@ -11,6 +11,8 @@ public:
 public:
 	void Append(void* pData, size_t iLen);
 	void AppendNul();
+	void* GetBuffer() { return mpBuffer; }
+	size_t GetBuffLen() { return miBufferUseLen; }
 
 private:
 	void* mpBuffer;
