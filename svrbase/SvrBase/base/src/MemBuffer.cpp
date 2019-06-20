@@ -16,6 +16,39 @@ CMemBuffer::~CMemBuffer(){
 	miBufferUseLen = 0;
 }
 
+void* CMemBuffer::GetBuffer(size_t iIndex) {
+	if (iIndex <= 0 || !mpBuffer || iIndex > miBufferUseLen) {
+		return NULL;
+	}
+
+	char* pTmp = (char*)mpBuffer;
+	pTmp += iIndex;
+	return (void*)pTmp;
+}
+
+void* CMemBuffer::AllocBuffer(size_t iLen) {
+	if (iLen <= 0) {
+		return NULL;
+	}
+
+	if (!mpBuffer) {
+		if (iLen > miBufferLen) {
+			miBufferLen += iLen - 1;
+		}
+
+		mpBuffer = MemMalloc(miBufferLen);
+	} else {
+		if (iLen > miBufferLen) {
+			miBufferLen += iLen - 1;
+		}
+
+		MemFree(mpBuffer);
+		mpBuffer = MemMalloc(miBufferLen);
+	}
+
+	return mpBuffer;
+}
+
 void CMemBuffer::AppendNul() {
 	if (mpBuffer) {
 		char* pTmp = (char*)mpBuffer;

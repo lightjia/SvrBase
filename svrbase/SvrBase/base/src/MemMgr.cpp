@@ -1,7 +1,7 @@
 #include "MemMgr.h"
 #include "util.h"
 #define MEM_MGR_ALLOC_MIN_LIMIT	1024
-#define MEM_MGR_ALLOC_ALIGN	100
+#define MEM_MGR_ALLOC_ALIGN	1024
 #define MEM_MGR_ALLOC_CHECK_RAND	0xFFFFF
 #define MEM_MGR_ALLOC_HEAD_LEN (sizeof(tagMemMgrHead))
 
