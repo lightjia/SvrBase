@@ -156,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\include\Log.h" />
+    <ClInclude Include="base\include\MemBuffer.h" />
     <ClInclude Include="base\include\Mutex.h" />
     <ClInclude Include="base\include\common.h" />
     <ClInclude Include="base\include\CoreMgr.h" />
@@ -210,6 +211,7 @@
     <ClCompile Include="base\src\CoreMgr.cpp" />
     <ClCompile Include="base\src\EventMgr.cpp" />
     <ClCompile Include="base\src\GuidTool.cpp" />
+    <ClCompile Include="base\src\MemBuffer.cpp" />
     <ClCompile Include="base\src\MemMgr.cpp" />
     <ClCompile Include="base\src\MemOper.cpp" />
     <ClCompile Include="base\src\RandTool.cpp" />

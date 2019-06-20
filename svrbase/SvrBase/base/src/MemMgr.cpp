@@ -154,9 +154,10 @@ void* CMemMgr::MemCalloc(size_t count, size_t size) {
 void* CMemMgr::DoRealloc(void* ptr, size_t size) {
 	void* pRet = NULL;
 	pRet = MemMalloc(size);
-	size_t* pTmp = (size_t*)ptr;
+	tagMemMgrHead* pTmp = (tagMemMgrHead*)ptr;
+	pTmp--;
 	if (pTmp) {
-		size_t iRealLen = pTmp[-2] > size ? size : pTmp[2];
+		size_t iRealLen = pTmp->iUse > size ? size : pTmp->iUse;
 		memcpy(pRet, ptr, iRealLen);
 	}
 	MemFree(ptr);

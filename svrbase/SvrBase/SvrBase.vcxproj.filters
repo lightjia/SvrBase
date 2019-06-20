@@ -201,6 +201,9 @@
     <ClInclude Include="base\include\Mutex.h">
       <Filter>base\include</Filter>
     </ClInclude>
+    <ClInclude Include="base\include\MemBuffer.h">
+      <Filter>base\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -318,6 +321,9 @@
       <Filter>base\src</Filter>
     </ClCompile>
     <ClCompile Include="base\src\Log.cpp">
+      <Filter>base\src</Filter>
+    </ClCompile>
+    <ClCompile Include="base\src\MemBuffer.cpp">
       <Filter>base\src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -18,6 +18,8 @@ void* CMemOper::MemMalloc(size_t iLen) {
 	void* pRet = NULL;
 	if (mpMalloc && iLen > 0) {
 		pRet = mpMalloc(iLen);
+	} else {
+		fprintf(stderr, "CMemOper::MemMalloc error");
 	}
 
 	return pRet;
@@ -27,6 +29,8 @@ void CMemOper::MemFree(void* pData) {
 	if (mpFree && pData) {
 		mpFree(pData);
 		pData = NULL;
+	} else {
+		fprintf(stderr, "CMemOper::MemFree error");
 	}
 }
 
@@ -34,6 +38,8 @@ void CMemOper::MemFreep(void** pData) {
 	if (pData) {
 		MemFree(*pData);
 		*pData = NULL;
+	} else {
+		fprintf(stderr, "CMemOper::MemFreep error");
 	}
 }
 
@@ -41,6 +47,8 @@ void* CMemOper::MemCalloc(size_t count, size_t size) {
 	void* pRet = NULL;
 	if (mpCalloc && count > 0 && size > 0) {
 		pRet = mpCalloc(count, size);
+	} else {
+		fprintf(stderr, "CMemOper::MemCalloc error");
 	}
 
 	return pRet;
@@ -50,6 +58,8 @@ void* CMemOper::MemRealloc(void* ptr, size_t size) {
 	void* pRet = NULL;
 	if (mpRealloc && ptr && size > 0) {
 		pRet = mpRealloc(ptr, size);
+	} else {
+		fprintf(stderr, "CMemOper::MemRealloc error");
 	}
 
 	return pRet;
