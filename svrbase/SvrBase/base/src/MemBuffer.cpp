@@ -64,15 +64,13 @@ void CMemBuffer::Append(void* pData, size_t iLen) {
 			mpBuffer = MemMalloc(miBufferLen);
 		}
 
-		if (iLen + miBufferUseLen < miBufferLen) {
-			memcpy((char*)mpBuffer + miBufferUseLen, pData, iLen);
-			miBufferUseLen += iLen;
-		} else {
+		if (iLen + miBufferUseLen >= miBufferLen) {
 			mpBuffer = MemRealloc(mpBuffer, miBufferLen + iLen + 1);
 			miBufferLen += iLen;
-			memcpy((char*)mpBuffer + miBufferUseLen, pData, iLen);
-			miBufferUseLen += iLen;
-		}
+		} 
+
+		memcpy((char*)mpBuffer + miBufferUseLen, pData, iLen);
+		miBufferUseLen += iLen;
 	} else {
 		fprintf(stderr, "Error CMemBuffer::Append");
 	}

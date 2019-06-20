@@ -101,7 +101,7 @@ void CUvPipeCli::AfterSend(uv_write_t* pReq, int iStatus) {
 	if (iter != mmapSend.end()) {
 		uv_write_t* pWriteReq = iter->first;
 		MemFree(pWriteReq);
-		miTotalSendBytes += iter->second.pBufs->len;
+		miTotalSendBytes += iter->second.pMemBuf->GetBuffLen();
 		DODELETE(iter->second.pMemBuf);
 		MemFree(iter->second.pBufs);
 		mmapSend.erase(iter);
@@ -175,7 +175,7 @@ int CUvPipeCli::Send(char* pData, ssize_t iLen) {
 
 	ASSERT_RET_VALUE(mpSendBuf, 1);
 	mpSendBuf->Append(pData, iLen);
-
+	miNeedSendBytes += iLen;
 	if (UV_PIPE_CLI_STATE_ESTAB == miTcpCliState) {
 		uv_async_send(&mstUvSendAsync);
 	}
