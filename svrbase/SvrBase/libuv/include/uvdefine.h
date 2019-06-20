@@ -1,6 +1,7 @@
 #ifndef __UVDEFINE__H_
 #define __UVDEFINE__H_
 #include "uv.h"
+#include "MemBuffer.h"
 
 #define UV_DEFAULT_BUF_SIZE 10240   //default 10KB buffer size
 #pragma pack(1)
@@ -14,6 +15,7 @@ struct tagUvBuf {
 struct tagUvBufArray {
     uv_buf_t* pBufs;
     unsigned int iBufNum;
+	CMemBuffer* pMemBuf;
 };
 #pragma pack()
 #endif

@@ -52,7 +52,7 @@ private:
 	uint64_t miTotalSendBytes;
 	uint64_t miNeedSendBytes;
     uv_async_t mstUvSendAsync;
-    std::queue<uv_buf_t> mqueSendBuf;
+	CMemBuffer* mpSendBuf;
     CUvMutex mcSendMutex;
     std::map<uv_write_t*, tagUvBufArray> mmapSend;
 };

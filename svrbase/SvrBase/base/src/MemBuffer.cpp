@@ -17,7 +17,7 @@ CMemBuffer::~CMemBuffer(){
 }
 
 void* CMemBuffer::GetBuffer(size_t iIndex) {
-	if (iIndex <= 0 || !mpBuffer || iIndex > miBufferUseLen) {
+	if (!mpBuffer || iIndex > miBufferUseLen) {
 		return NULL;
 	}
 
