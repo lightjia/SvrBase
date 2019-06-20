@@ -39,11 +39,9 @@ void* CMemBuffer::AllocBuffer(size_t iLen) {
 		mpBuffer = MemMalloc(miBufferLen);
 	} else {
 		if (iLen > miBufferLen) {
-			miBufferLen += iLen - 1;
+			mpBuffer = MemRealloc(mpBuffer, miBufferLen + iLen + 1);
+			miBufferLen += iLen;
 		}
-
-		MemFree(mpBuffer);
-		mpBuffer = MemMalloc(miBufferLen);
 	}
 
 	return mpBuffer;

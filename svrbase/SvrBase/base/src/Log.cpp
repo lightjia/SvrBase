@@ -1,4 +1,5 @@
 #include "Log.h"
+#include "MemBuffer.h"
 
 #ifdef WIN32
 const static WORD LOG_COLOR[LOG_LEVEL_MAX] = {
@@ -144,7 +145,8 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
 	}
 
     unsigned long lBufferSize = MAX_PER_LINE_LOG;
-    char* pLog = (char*)MemMalloc(sizeof(char) * (lBufferSize + 1));
+	CMemBuffer cMemBuffer;
+    char* pLog = (char*)cMemBuffer.AllocBuffer(lBufferSize);
     unsigned long nPos = 0;
     if (iLevel <= LOG_LEVEL_INFO) {
         struct systemtime_t stNow = get_now_time();
@@ -167,10 +169,7 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
             break;
         } else {
             lBufferSize *= 2;
-            char* pTmpLog = (char*)MemMalloc(sizeof(char) * (lBufferSize + 1));
-            memcpy(pTmpLog, pLog, nPos);
-            MemFree(pLog);
-            pLog = pTmpLog;
+			pLog = (char*)cMemBuffer.AllocBuffer(lBufferSize);
         }
     }
 
@@ -248,7 +247,6 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
         }
     }
     mcQueLogItemsMutex.UnLock();
-    MemFree(pLog);
 
     mcCond.Signal();
 }
