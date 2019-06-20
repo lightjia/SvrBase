@@ -406,7 +406,7 @@ std::string get_app_path()
 	strRet = szExePath;
 #elif  (defined PLATFORM_LINUX)
 #define MAX_PATH 0x100
-	char szFilePath[MAX_PATH];
+	char szFilePath[MAX_PATH] = { 0 };
 	int cnt = readlink("/proc/self/exe", szFilePath, MAX_PATH);
 	if (cnt < 0 || cnt >= MAX_PATH)
 	{
