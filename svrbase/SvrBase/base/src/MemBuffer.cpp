@@ -5,6 +5,7 @@ CMemBuffer::CMemBuffer():CMemOper(MEMMGR_MEM_FUNC){
 	mpBuffer = NULL;
 	miBufferLen = 0;
 	miBufferUseLen = 0;
+	miAppendNum = 0;
 }
 
 CMemBuffer::~CMemBuffer(){
@@ -36,6 +37,7 @@ int CMemBuffer::SetBuffer(const void* pData, const size_t iDataLen) {
 	mpBuffer = NULL;
 	miBufferUseLen = 0;
 	miBufferLen = 0;
+	miAppendNum = 0;
 	Append(pData, iDataLen);
 	return 0;
 }
@@ -101,7 +103,8 @@ void CMemBuffer::Append(const void* pData, const size_t iLen) {
 			mpBuffer = MemMalloc(miBufferLen + 1);
 		}
 
-		if (iLen + miBufferUseLen >= miBufferLen) {
+		if (iLen + miBufferUseLen > miBufferLen) {
+			miBufferLen += MEM_BUFFER_DEFAULT_LEN * (++miAppendNum);
 			mpBuffer = MemRealloc(mpBuffer, miBufferLen + iLen + 1);
 			miBufferLen += iLen;
 		} 

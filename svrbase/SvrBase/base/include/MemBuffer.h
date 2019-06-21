@@ -23,6 +23,7 @@ private:
 
 private:
 	void* mpBuffer;
+	int miAppendNum;
 	size_t miBufferLen;
 	size_t miBufferUseLen;
 };
