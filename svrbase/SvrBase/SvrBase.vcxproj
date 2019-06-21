@@ -166,7 +166,6 @@
     <ClInclude Include="base\include\MemMgr.h" />
     <ClInclude Include="base\include\MemOper.h" />
     <ClInclude Include="base\include\RandTool.h" />
-    <ClInclude Include="base\include\RcBuffer.h" />
     <ClInclude Include="base\include\RcObject.h" />
     <ClInclude Include="base\include\singleton.h" />
     <ClInclude Include="base\include\Task.h" />
@@ -215,7 +214,6 @@
     <ClCompile Include="base\src\MemMgr.cpp" />
     <ClCompile Include="base\src\MemOper.cpp" />
     <ClCompile Include="base\src\RandTool.cpp" />
-    <ClCompile Include="base\src\RcBuffer.cpp" />
     <ClCompile Include="base\src\RcObject.cpp" />
     <ClCompile Include="base\src\util.cpp" />
     <ClCompile Include="cfg\src\Config.cpp" />

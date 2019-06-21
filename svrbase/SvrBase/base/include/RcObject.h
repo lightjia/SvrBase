@@ -1,6 +1,6 @@
 #ifndef __CRCOBJECT__H_
 #define __CRCOBJECT__H_
-#include "Log.h"
+#include "UvMutex.h"
 class CRcObject
 {
 public:

@@ -3,6 +3,7 @@
 #include "singleton.h"
 #include "UvTaskThread.h"
 #include "UvMutex.h"
+#include "Log.h"
 #include <set>
 #include <queue>
 class CUvTaskPool : public CSingleton<CUvTaskPool>, public CUvThread

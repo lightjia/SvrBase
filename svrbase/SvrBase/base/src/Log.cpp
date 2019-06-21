@@ -1,5 +1,4 @@
 #include "Log.h"
-#include "MemBuffer.h"
 
 #ifdef WIN32
 const static WORD LOG_COLOR[LOG_LEVEL_MAX] = {
@@ -27,7 +26,6 @@ const static char LOG_COLOR[LOG_LEVEL_MAX][50] = {
 
 CLog::CLog(){
 	mlCurFileCount = 0;
-    miCurrentLogItemNum = 0;
 	miTotalCount = 0;
 	mbInit = false;
 	mpFile = stdout;
@@ -145,8 +143,8 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
 	}
 
     unsigned long lBufferSize = MAX_PER_LINE_LOG;
-	CMemBuffer cMemBuffer;
-    char* pLog = (char*)cMemBuffer.AllocBuffer(lBufferSize);
+	CMemBuffer* pLogBuffer = new CMemBuffer();
+    char* pLog = (char*)pLogBuffer->AllocBuffer(lBufferSize);
     unsigned long nPos = 0;
     if (iLevel <= LOG_LEVEL_INFO) {
         struct systemtime_t stNow = get_now_time();
@@ -169,95 +167,37 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
             break;
         } else {
             lBufferSize *= 2;
-			pLog = (char*)cMemBuffer.AllocBuffer(lBufferSize);
+			pLog = (char*)pLogBuffer->AllocBuffer(lBufferSize);
         }
     }
 
     pLog[nPos] = '\n';
     nPos++;
+	pLogBuffer->SetBuffLen(nPos);
     if (mstLogParam.pLogCb) {
 		mstLogParam.pLogCb(iLevel, pLog);
     }
 
-    bool bNewLog = true;
-    mcQueLogItemsMutex.Lock();
+    mcLogMutex.Lock();
 	miTotalCount += nPos;
-    for (;;) {
-        std::vector<tagLogItem*>* pVecFreeLogItems = NULL;
-        std::map<int, std::vector<tagLogItem*>*>::iterator iter = mMapFreeLogItems.find(iLevel);
-        if (iter == mMapFreeLogItems.end()) {
-            pVecFreeLogItems = new std::vector<tagLogItem*>();
-            mMapFreeLogItems.insert(std::make_pair(iLevel, pVecFreeLogItems));
-        } else {
-            pVecFreeLogItems = iter->second;
-        }
+	std::map<int, CMemBuffer*>::iterator iter = mMapLogItems.find(iLevel);
+	if (iter == mMapLogItems.end()) {
+		mMapLogItems.insert(std::make_pair(iLevel, pLogBuffer));
+		pLogBuffer = NULL;
+	} else {
+		if (iter->second) {
+			iter->second->Append(pLog, nPos);
+		}
+	}
+    mcLogMutex.UnLock();
 
-        if (!pVecFreeLogItems) {
-            continue;
-        }
-
-        tagLogItem* pLogItem = NULL;
-        if (!pVecFreeLogItems->empty()) {
-            pLogItem = pVecFreeLogItems->back();
-        } else {
-            pLogItem = (tagLogItem*)MemMalloc(sizeof(tagLogItem));
-            pLogItem->pLog = (char*)MemMalloc((MAX_PER_LOG_ITEM_CACHE_SIZE) * sizeof(char));
-            pLogItem->iTotal = MAX_PER_LOG_ITEM_CACHE_SIZE;
-			pLogItem->iLevel = iLevel;
-			pLogItem->iUse = 0;
-            char szLogNum[120];
-            int iLogNumLen = sprintf(szLogNum, "Current Log Item Num:%d\n", ++miCurrentLogItemNum);
-            if (bNewLog) {
-                memcpy(pLogItem->pLog, szLogNum, iLogNumLen);
-                pLogItem->iUse += iLogNumLen;
-            } else {
-                memcpy(pLog + nPos, szLogNum, iLogNumLen);
-                nPos += iLogNumLen;
-            }
-            
-            pVecFreeLogItems->push_back(pLogItem);
-        }
-
-        if (!pLogItem) {
-            continue;
-        }
-
-        if (nPos + pLogItem->iUse < pLogItem->iTotal) {
-            memcpy(pLogItem->pLog + pLogItem->iUse, pLog, nPos);
-            pLogItem->iUse += nPos;
-
-            if (mQueLogItems.empty()) {
-                mQueLogItems.push(pLogItem);
-                pVecFreeLogItems->pop_back();
-            }
-
-            break;
-        } else {
-            unsigned long iRest = pLogItem->iTotal - pLogItem->iUse;
-            if (iRest > 0 && iRest < nPos) {
-                bNewLog = false;
-                memcpy(pLogItem->pLog + pLogItem->iUse, pLog, iRest);
-                nPos -= iRest;
-                memmove(pLog, pLog + iRest, nPos);
-                pLogItem->iUse += iRest;
-            }
-
-            mQueLogItems.push(pLogItem);
-            pVecFreeLogItems->pop_back();
-        }
-    }
-    mcQueLogItemsMutex.UnLock();
-
+	DODELETE(pLogBuffer);
     mcCond.Signal();
 }
 
 int CLog::Init(const tagLogInitParam& stLogParam){
 	if (!mbInit) {
-		mstLogParam.iLogLevel = stLogParam.iLogLevel;
-		mstLogParam.iLogType = stLogParam.iLogType;
-		mstLogParam.strLogDir = stLogParam.strLogDir;
-		mstLogParam.pLogCb = stLogParam.pLogCb;
-		mstLogParam.pLogFileChangeCb = stLogParam.pLogFileChangeCb;
+		mstLogParam = stLogParam;
 		SetLogType(mstLogParam.iLogType);
 		SetLogLevel(mstLogParam.iLogLevel);
 		if (mstLogParam.strLogDir.empty() || str_cmp(mstLogParam.strLogDir.c_str(), ".", true)) {
@@ -279,22 +219,21 @@ int CLog::StopLog(){
 	return 0;
 }
 
-void CLog::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
-    ASSERT_RET(pLogItem && pLogItem->iUse > 0 && pLogItem->pLog && pFile);
-   
+void CLog::WriteLog(CMemBuffer* pLogBuf, int iLogLevel, FILE* pFile) {   
     bool bColor = false;
-    if (stdout == pFile && pLogItem->iLevel < LOG_LEVEL_DBG) {
+    if (stdout == pFile && iLogLevel < LOG_LEVEL_DBG) {
         bColor = true;
 #if (defined PLATFORM_WINDOWS)
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LOG_COLOR[pLogItem->iLevel]);
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LOG_COLOR[iLogLevel]);
 #elif  (defined PLATFORM_LINUX)
         printf("%s", LOG_COLOR[pLogItem->iLevel]);
 #endif
     }
 
-    unsigned long iOff = 0;
-    while (iOff < pLogItem->iUse) {
-        int iWrite = (int)fwrite(pLogItem->pLog + iOff, 1, pLogItem->iUse - iOff, pFile);
+    size_t iOff = 0;
+	char* pLog = (char*)pLogBuf->GetBuffer();
+    while (iOff < pLogBuf->GetBuffLen()) {
+        int iWrite = (int)fwrite(pLog, 1, pLogBuf->GetBuffLen() - iOff, pFile);
         if (iWrite < 0) {
             fprintf(stderr, "Write Log Error\n");
             break;
@@ -312,80 +251,35 @@ void CLog::WriteLog(tagLogItem* pLogItem, FILE* pFile) {
     }
 }
 
-int CLog::PrintItem(tagLogItem* pLogItem){
-    ASSERT_RET_VALUE(pLogItem && mpFile, 1);
+int CLog::PrintLog(CMemBuffer* pLogBuf, int iLogLevel){
+	if (!pLogBuf) {
+		return 1;
+	}
 
-    WriteLog(pLogItem, mpFile);
+    WriteLog(pLogBuf, iLogLevel, mpFile);
     if (mstLogParam.iLogType == LOG_TYPE_TEE && mpFile != stdout){
-        WriteLog(pLogItem, stdout);
+        WriteLog(pLogBuf, iLogLevel, stdout);
     }
 
-    mlCurFileCount += pLogItem->iUse;
-    pLogItem->iUse = 0;
-    memset(pLogItem->pLog, 0, pLogItem->iTotal);
+    mlCurFileCount += (unsigned long)pLogBuf->GetBuffLen();
+	DODELETE(pLogBuf);
+
 	return Check();
 }
 
 int CLog::OnThreadRun() {
-    std::vector<tagLogItem*> vecTmp;
     for (;;) {
 #define LOG_WAIT_SEC    2 * 1000 * 1000
         mcCond.TimedWait(LOG_WAIT_SEC);
-        std::queue<tagLogItem*> queTmp;
-        if (!mcQueLogItemsMutex.TryLock()) {
-            while (!mQueLogItems.empty()) {
-                queTmp.push(mQueLogItems.front());
-                mQueLogItems.pop();
-            }
+		std::map<int, CMemBuffer*> mapTmp;
+		mcLogMutex.Lock();
+		mapTmp = mMapLogItems;
+		mMapLogItems.clear();
+		mcLogMutex.UnLock();
 
-            for (std::vector<tagLogItem*>::iterator iter = vecTmp.begin(); iter != vecTmp.end(); ) {
-                tagLogItem* pLogItem = *iter;
-                if (pLogItem) {
-                    std::map<int, std::vector<tagLogItem*>*>::iterator iter_map = mMapFreeLogItems.find(pLogItem->iLevel);
-                    if (iter_map != mMapFreeLogItems.end()) {
-                        if (!iter_map->second->empty()) {
-                            tagLogItem* pTmpLogItem = iter_map->second->back();
-                            if (pTmpLogItem && pTmpLogItem->iUse > 0){
-                                char* pTmpLogData = pTmpLogItem->pLog;
-                                pTmpLogItem->pLog = pLogItem->pLog;
-                                pLogItem->pLog = pTmpLogData;
-                                pLogItem->iUse = pTmpLogItem->iUse;
-                                pTmpLogItem->iUse = 0;
-                            }
-                        }
-
-                        iter_map->second->push_back(pLogItem);
-                        iter = vecTmp.erase(iter);
-                    } else {
-                        fprintf(stderr, "Not find level:%d log\n", pLogItem->iLevel);
-                        ++iter;
-                    }
-                }
-            }
-
-            if (queTmp.empty()) {
-                for (std::map<int, std::vector<tagLogItem*>*>::iterator iter_map = mMapFreeLogItems.begin(); iter_map != mMapFreeLogItems.end(); ++iter_map) {
-                    if (!iter_map->second->empty()) {
-                        tagLogItem* pTmpLogItem = iter_map->second->back();
-                        if (pTmpLogItem && pTmpLogItem->iUse > 0) {
-                            queTmp.push(pTmpLogItem);
-                            iter_map->second->pop_back();
-                        }
-                    }
-                }
-            }
-            mcQueLogItemsMutex.UnLock();
-        }
-        
-        while (!queTmp.empty()) {
-            tagLogItem* pLogItem = queTmp.front();
-            queTmp.pop();
-
-            if (pLogItem) {
-                PrintItem(pLogItem);
-                vecTmp.push_back(pLogItem);
-            }
-        }
+		for (std::map<int, CMemBuffer*>::iterator iter = mapTmp.begin(); iter != mapTmp.end(); ++iter) {
+			PrintLog(iter->second, iter->first);
+		}
     }
 
     return 0;

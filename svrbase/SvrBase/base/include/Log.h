@@ -6,6 +6,7 @@
 #include "UvThread.h"
 #include "UvCond.h"
 #include "MemOper.h"
+#include "MemBuffer.h"
 #include <queue>
 #include <string>
 #include <vector>
@@ -28,13 +29,6 @@ enum LogLevel{
 typedef void (*log_cb)(int iLevel, const char *pData);
 typedef void(*log_file_change_cb)(const std::string&);
 #pragma pack(1)
-struct tagLogItem
-{
-	int iLevel;
-    char* pLog;
-    unsigned long iUse;
-    unsigned long iTotal;
-};
 
 struct tagLogInitParam {
 	tagLogInitParam() {
@@ -73,8 +67,8 @@ private:
 	int Check();
 	FILE* GetFile();
     int SetLogFile(FILE* pFile);
-	int PrintItem(tagLogItem* pLogItem);
-    void WriteLog(tagLogItem* pLogItem, FILE* pFile);
+    void WriteLog(CMemBuffer* pLogBuf, int iLogLevel, FILE* pFile);
+	int PrintLog(CMemBuffer* pLogBuf, int iLogLevel);
 
 private:
 	tagLogInitParam mstLogParam;
@@ -83,10 +77,8 @@ private:
 	bool mbInit;
 	FILE* mpFile;
     CUvMutex mcConfMutex;
-	CUvMutex mcQueLogItemsMutex;
-    std::queue<tagLogItem*> mQueLogItems;
-    unsigned int miCurrentLogItemNum;
-    std::map<int, std::vector<tagLogItem*>*> mMapFreeLogItems;
+	CUvMutex mcLogMutex;
+    std::map<int, CMemBuffer*> mMapLogItems;
     CUvCond mcCond;
 };
 

@@ -186,9 +186,6 @@
     <ClInclude Include="libuv\include\UvUtil.h">
       <Filter>libuv\include</Filter>
     </ClInclude>
-    <ClInclude Include="base\include\RcBuffer.h">
-      <Filter>base\include</Filter>
-    </ClInclude>
     <ClInclude Include="base\include\MemMgr.h">
       <Filter>base\include</Filter>
     </ClInclude>
@@ -310,9 +307,6 @@
     </ClCompile>
     <ClCompile Include="libuv\src\UvUtil.cpp">
       <Filter>libuv\src</Filter>
-    </ClCompile>
-    <ClCompile Include="base\src\RcBuffer.cpp">
-      <Filter>base\src</Filter>
     </ClCompile>
     <ClCompile Include="base\src\MemMgr.cpp">
       <Filter>base\src</Filter>
