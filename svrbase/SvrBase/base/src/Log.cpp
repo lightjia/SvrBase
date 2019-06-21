@@ -187,6 +187,8 @@ void CLog::AddLogItem(int iLevel, const char *format, ...){
 	} else {
 		if (iter->second) {
 			iter->second->Append(pLog, nPos);
+		} else {
+			fprintf(stderr, "insert log error");
 		}
 	}
     mcLogMutex.UnLock();
