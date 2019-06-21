@@ -228,7 +228,7 @@ void CLog::WriteLog(CMemBuffer* pLogBuf, int iLogLevel, FILE* pFile) {
 #if (defined PLATFORM_WINDOWS)
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LOG_COLOR[iLogLevel]);
 #elif  (defined PLATFORM_LINUX)
-        printf("%s", LOG_COLOR[pLogItem->iLevel]);
+        printf("%s", LOG_COLOR[iLogLevel]);
 #endif
     }
 
