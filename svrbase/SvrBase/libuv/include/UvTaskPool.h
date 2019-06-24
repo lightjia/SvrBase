@@ -6,8 +6,7 @@
 #include "Log.h"
 #include <set>
 #include <queue>
-class CUvTaskPool : public CSingleton<CUvTaskPool>, public CUvThread
-{
+class CUvTaskPool : public CSingleton<CUvTaskPool>, public CUvThread{
     SINGLE_CLASS_INITIAL(CUvTaskPool);
 public:
     ~CUvTaskPool();
@@ -17,6 +16,8 @@ public:
     int UnInit();
     int PushTask(CTask* pTask);
     int PushTaskThread(CUvTaskThread* pTaskThread);
+	const int GetTaskThreadNum(){ return miTaskThreadNum; }
+	const int GetTaskNum() { return miTaskNum; }
 
 private:
     CTask* PopTask();
@@ -29,9 +30,11 @@ private:
     bool mbStart;
     std::queue<CTask*> mqueTasks;
     CUvMutex mcQueTasksMutex;
+	int miTaskNum;
 
     std::set<CUvTaskThread*> msetTaskThreads;
     CUvMutex mcTaskThreadsMutex;
+	int miTaskThreadNum;
 };
 
 #define sUvTaskPool CUvTaskPool::Instance()

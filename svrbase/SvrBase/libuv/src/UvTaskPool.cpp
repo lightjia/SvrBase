@@ -2,6 +2,8 @@
 
 CUvTaskPool::CUvTaskPool(){
     mbStart = false;
+	miTaskThreadNum = 0;
+	miTaskNum = 0;
 }
 
 CUvTaskPool::~CUvTaskPool(){
@@ -50,6 +52,7 @@ int CUvTaskPool::PushTask(CTask* pTask) {
     REF(pTask);
     mcQueTasksMutex.Lock();
     mqueTasks.push(pTask);
+	miTaskNum++;
     mcQueTasksMutex.UnLock();
 
     Activate();
@@ -77,6 +80,7 @@ int CUvTaskPool::DispatchTask(CTask* pTask) {
 
     if (NULL == pTaskThread) {
         pTaskThread = new CUvTaskThread();
+		miTaskThreadNum++;
         ASSERT_RET_VALUE(NULL != pTaskThread, 1);
         pTaskThread->SetTask(pTask);
         pTaskThread->Start();

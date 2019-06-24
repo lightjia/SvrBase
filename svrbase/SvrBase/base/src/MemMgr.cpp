@@ -7,6 +7,7 @@
 
 CMemMgr::CMemMgr(){
 	miTotolMem = 0;
+	miTotalUseMem = 0;
 	miAlign = MEM_MGR_ALLOC_ALIGN;
 	miAllocMinLimit = MEM_MGR_ALLOC_MIN_LIMIT;
 	miCheckFlag = rand() % MEM_MGR_ALLOC_CHECK_RAND;
@@ -42,7 +43,7 @@ void* CMemMgr::DoMalloc(size_t iLen) {
 		iNeedLen = iNeedLen + (miAlign - iNeedLen % miAlign);
 		size_t iIndex = iNeedLen / miAlign;
 		std::queue<void*>* pQueTmp = NULL;
-		CUvMutex* pMutex = NULL;
+		CMutex* pMutex = NULL;
 		mpVecMemMutex->Lock();
 		if (iIndex <= mvecMem.size()) {
 			pQueTmp = mvecMem[iIndex - 1];
@@ -72,15 +73,22 @@ void* CMemMgr::DoMalloc(size_t iLen) {
 	}
 
 	if (!pRet) {
-		pRet = malloc(iNeedLen);
+		while (!pRet) {
+			pRet = malloc(iNeedLen);
+		}
+
 		mpTotalMemMutex->Lock();
 		miTotolMem += iNeedLen;
 		mpTotalMemMutex->UnLock();
-		//printf("Malloc Mem:%lld TotalMem:%lld\n", iNeedLen, miTotolMem);
+	} else {
+		mpTotalMemMutex->Lock();
+		miTotalUseMem += iLen;
+		mpTotalMemMutex->UnLock();
 	}
 
 	if (pRet) {
 		tagMemMgrHead* pMemHead = (tagMemMgrHead*)pRet;
+		memset(pRet, iNeedLen, 0);
 		pMemHead->iTotal = iNeedLen;
 		pMemHead->iUse = iLen;
 		pMemHead->iCheckFlag = miCheckFlag;
@@ -103,16 +111,18 @@ void  CMemMgr::DoFree(void* pData) {
 		}
 
 		size_t iRealLen = pMemHead->iTotal;
+		size_t iUseLen = pMemHead->iUse;
 		void* pRealData = (void*)pMemHead;
 		//printf("Mem Free :%lld\n", iRealLen);
 		if (iRealLen == miAllocMinLimit) {
 			free(pRealData);
 			mpTotalMemMutex->Lock();
 			miTotolMem -= iRealLen;
+			miTotalUseMem -= iUseLen;
 			mpTotalMemMutex->UnLock();
 		} else if (iRealLen % miAlign == 0) {
 			std::queue<void*>* pQueTmp = NULL;
-			CUvMutex* pMutex = NULL;
+			CMutex* pMutex = NULL;
 			size_t iIndex = iRealLen / miAlign;
 			mpVecMemMutex->Lock();
 			if (iIndex <= mvecMem.size()) {
@@ -125,6 +135,10 @@ void  CMemMgr::DoFree(void* pData) {
 				pMutex->Lock();
 				pQueTmp->push(pRealData);
 				pMutex->UnLock();
+
+				mpTotalMemMutex->Lock();
+				miTotalUseMem -= iUseLen;
+				mpTotalMemMutex->UnLock();
 			} else {
 				printf("Error Mem Index :%ld\n", (unsigned long)iIndex);
 			}
@@ -142,7 +156,6 @@ void* CMemMgr::DoCalloc(size_t count, size_t size) {
 	void* pRet = NULL;
 	size_t iNeedLen = count * size;
 	pRet = MemMalloc(iNeedLen);
-	memset(pRet, 0, iNeedLen);
 
 	return pRet;
 }

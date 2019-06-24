@@ -20,7 +20,8 @@ public:
 	~CMemMgr();
 
 public:
-	size_t GetTotalMem() { return miTotolMem; }
+	const size_t GetTotalMem() { return miTotolMem; }
+	const size_t GetTotalUseMem() { return miTotalUseMem; }
 	void SetAlign(unsigned int iAlign);
 	void SetAllocMinLimit(unsigned int iMinLimit);
 
@@ -41,10 +42,11 @@ private:
 	unsigned int miAlign;
 	unsigned int miAllocMinLimit;
 	size_t miTotolMem;
+	size_t miTotalUseMem;
 	std::vector<std::queue<void*>*> mvecMem;
-	std::vector<CUvMutex*> mvecMemItemLock;
-	CUvMutex* mpVecMemMutex;
-	CUvMutex* mpTotalMemMutex;
+	std::vector<CMutex*> mvecMemItemLock;
+	CMutex* mpVecMemMutex;
+	CMutex* mpTotalMemMutex;
 };
 
 #define sMemMgr CMemMgr::Instance()
