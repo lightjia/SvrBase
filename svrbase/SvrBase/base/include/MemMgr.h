@@ -28,6 +28,8 @@ public:
 	const uint64_t GetTotalMem() { return miTotolMem; }
 	const uint64_t GetTotalMalloc() { return miTotalMalloc; }
 	const uint64_t GetTotalFree() { return miTotalFree; }
+	const uint32_t GetMemItemsNum() { return miMemItemsNum; }
+	const uint32_t GetMapMemNums() { return miMapMemNums; }
 	void SetAlign(unsigned int iAlign);
 	void SetAllocMinLimit(unsigned int iMinLimit);
 
@@ -47,6 +49,8 @@ private:
 	int miCheckFlag;
 	unsigned int miAlign;
 	unsigned int miAllocMinLimit;
+	uint32_t miMemItemsNum;
+	uint32_t miMapMemNums;
 	uint64_t miTotolMem;
 	CMutex* mpTotalMemMutex;
 	std::map<uint32_t, tagMemMgrItem> mmapMemItems;

@@ -9,6 +9,8 @@ CMemMgr::CMemMgr(){
 	miTotolMem = 0;
 	miTotalMalloc = 0;
 	miTotalFree = 0;
+	miMemItemsNum = 0;
+	miMapMemNums = 0;
 	miAlign = MEM_MGR_ALLOC_ALIGN;
 	miAllocMinLimit = MEM_MGR_ALLOC_MIN_LIMIT;
 	miCheckFlag = rand() % MEM_MGR_ALLOC_CHECK_RAND;
@@ -68,6 +70,7 @@ void* CMemMgr::DoMalloc(size_t iLen) {
 			stMemMgrItem.pQueMemItems = pQueTmp;
 			stMemMgrItem.pMutex = pMutex;
 			mmapMemItems.insert(std::make_pair(iIndex, stMemMgrItem));
+			miMapMemNums++;
 			mpMapMemMutex->UnLock();
 		}
 	} else {
@@ -82,6 +85,7 @@ void* CMemMgr::DoMalloc(size_t iLen) {
 		mpTotalMemMutex->Lock();
 		miTotolMem += iNeedLen;
 		miTotalMalloc += iLen;
+		miMemItemsNum++;
 		mpTotalMemMutex->UnLock();
 	} else {
 		mpTotalMemMutex->Lock();
