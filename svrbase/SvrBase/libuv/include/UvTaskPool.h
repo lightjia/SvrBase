@@ -17,7 +17,7 @@ public:
     int PushTask(CTask* pTask);
     int PushTaskThread(CUvTaskThread* pTaskThread);
 	const int GetTaskThreadNum(){ return miTaskThreadNum; }
-	const int GetTaskNum() { return miTaskNum; }
+	const uint64_t GetTaskNum() { return miTaskNum; }
 
 private:
     CTask* PopTask();
@@ -30,7 +30,7 @@ private:
     bool mbStart;
     std::queue<CTask*> mqueTasks;
     CUvMutex mcQueTasksMutex;
-	int miTaskNum;
+	uint64_t miTaskNum;
 
     std::set<CUvTaskThread*> msetTaskThreads;
     CUvMutex mcTaskThreadsMutex;

@@ -7,17 +7,18 @@
 
 CMemMgr::CMemMgr(){
 	miTotolMem = 0;
-	miTotalUseMem = 0;
+	miTotalMalloc = 0;
+	miTotalFree = 0;
 	miAlign = MEM_MGR_ALLOC_ALIGN;
 	miAllocMinLimit = MEM_MGR_ALLOC_MIN_LIMIT;
 	miCheckFlag = rand() % MEM_MGR_ALLOC_CHECK_RAND;
 	mpTotalMemMutex = new CUvMutex(true);
-	mpVecMemMutex = new CUvMutex(true);
+	mpMapMemMutex = new CUvMutex(true);
 }
 
 CMemMgr::~CMemMgr(){
 	DODELETE(mpTotalMemMutex);
-	DODELETE(mpVecMemMutex);
+	DODELETE(mpMapMemMutex);
 }
 
 void CMemMgr::SetAlign(unsigned int iAlign) {
@@ -41,15 +42,16 @@ void* CMemMgr::DoMalloc(size_t iLen) {
 	size_t iNeedLen = MEM_MGR_ALLOC_HEAD_LEN + iLen;
 	if (iNeedLen > miAllocMinLimit) {
 		iNeedLen = iNeedLen + (miAlign - iNeedLen % miAlign);
-		size_t iIndex = iNeedLen / miAlign;
+		uint32_t iIndex = (uint32_t)(iNeedLen / miAlign);
 		std::queue<void*>* pQueTmp = NULL;
 		CMutex* pMutex = NULL;
-		mpVecMemMutex->Lock();
-		if (iIndex <= mvecMem.size()) {
-			pQueTmp = mvecMem[iIndex - 1];
-			pMutex = mvecMemItemLock[iIndex - 1];
-		} 
-		mpVecMemMutex->UnLock();
+		mpMapMemMutex->Lock();
+		std::map<uint32_t, tagMemMgrItem>::iterator iter = mmapMemItems.find(iIndex);
+		if (iter != mmapMemItems.end()) {
+			pQueTmp = iter->second.pQueMemItems;
+			pMutex = iter->second.pMutex;
+		}
+		mpMapMemMutex->UnLock();
 
 		if (pQueTmp && pMutex) {
 			pMutex->Lock();
@@ -59,14 +61,14 @@ void* CMemMgr::DoMalloc(size_t iLen) {
 			}
 			pMutex->UnLock();
 		} else {
-			mpVecMemMutex->Lock();
-			while (mvecMem.size() < iIndex) {
-				std::queue<void*>* pQueTmp = new std::queue<void *>();
-				mvecMem.push_back(pQueTmp);
-				CUvMutex* pMutex = new CUvMutex(true);
-				mvecMemItemLock.push_back(pMutex);
-			}
-			mpVecMemMutex->UnLock();
+			mpMapMemMutex->Lock();
+			pQueTmp = new std::queue<void *>();
+			pMutex = new CUvMutex(true);
+			tagMemMgrItem stMemMgrItem;
+			stMemMgrItem.pQueMemItems = pQueTmp;
+			stMemMgrItem.pMutex = pMutex;
+			mmapMemItems.insert(std::make_pair(iIndex, stMemMgrItem));
+			mpMapMemMutex->UnLock();
 		}
 	} else {
 		iNeedLen = miAllocMinLimit;
@@ -79,16 +81,17 @@ void* CMemMgr::DoMalloc(size_t iLen) {
 
 		mpTotalMemMutex->Lock();
 		miTotolMem += iNeedLen;
+		miTotalMalloc += iLen;
 		mpTotalMemMutex->UnLock();
 	} else {
 		mpTotalMemMutex->Lock();
-		miTotalUseMem += iLen;
+		miTotalMalloc += iLen;
 		mpTotalMemMutex->UnLock();
 	}
 
 	if (pRet) {
 		tagMemMgrHead* pMemHead = (tagMemMgrHead*)pRet;
-		memset(pRet, iNeedLen, 0);
+		memset(pRet, 0, iNeedLen);
 		pMemHead->iTotal = iNeedLen;
 		pMemHead->iUse = iLen;
 		pMemHead->iCheckFlag = miCheckFlag;
@@ -118,18 +121,19 @@ void  CMemMgr::DoFree(void* pData) {
 			free(pRealData);
 			mpTotalMemMutex->Lock();
 			miTotolMem -= iRealLen;
-			miTotalUseMem -= iUseLen;
+			miTotalFree -= iUseLen;
 			mpTotalMemMutex->UnLock();
 		} else if (iRealLen % miAlign == 0) {
 			std::queue<void*>* pQueTmp = NULL;
 			CMutex* pMutex = NULL;
-			size_t iIndex = iRealLen / miAlign;
-			mpVecMemMutex->Lock();
-			if (iIndex <= mvecMem.size()) {
-				pQueTmp = mvecMem[iIndex - 1];
-				pMutex = mvecMemItemLock[iIndex - 1];
+			uint32_t iIndex = (uint32_t)(iRealLen / miAlign);
+			mpMapMemMutex->Lock();
+			std::map<uint32_t, tagMemMgrItem>::iterator iter = mmapMemItems.find(iIndex);
+			if (iter != mmapMemItems.end()) {
+				pQueTmp = iter->second.pQueMemItems;
+				pMutex = iter->second.pMutex;
 			}
-			mpVecMemMutex->UnLock();
+			mpMapMemMutex->UnLock();
 
 			if (pQueTmp && pMutex) {
 				pMutex->Lock();
@@ -137,10 +141,10 @@ void  CMemMgr::DoFree(void* pData) {
 				pMutex->UnLock();
 
 				mpTotalMemMutex->Lock();
-				miTotalUseMem -= iUseLen;
+				miTotalFree -= iUseLen;
 				mpTotalMemMutex->UnLock();
 			} else {
-				printf("Error Mem Index :%ld\n", (unsigned long)iIndex);
+				printf("Error Mem Index :%d\n", iIndex);
 			}
 		} else {
 			printf("Error Mem Free :%ld\n", (unsigned long)iRealLen);
