@@ -125,7 +125,7 @@ void  CMemMgr::DoFree(void* pData) {
 			free(pRealData);
 			mpTotalMemMutex->Lock();
 			miTotolMem -= iRealLen;
-			miTotalFree -= iUseLen;
+			miTotalFree += iUseLen;
 			mpTotalMemMutex->UnLock();
 		} else if (iRealLen % miAlign == 0) {
 			std::queue<void*>* pQueTmp = NULL;
@@ -145,7 +145,7 @@ void  CMemMgr::DoFree(void* pData) {
 				pMutex->UnLock();
 
 				mpTotalMemMutex->Lock();
-				miTotalFree -= iUseLen;
+				miTotalFree += iUseLen;
 				mpTotalMemMutex->UnLock();
 			} else {
 				printf("Error Mem Index :%d\n", iIndex);
