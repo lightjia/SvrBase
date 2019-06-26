@@ -125,6 +125,7 @@ void  CMemMgr::DoFree(void* pData) {
 			free(pRealData);
 			mpTotalMemMutex->Lock();
 			miTotolMem -= iRealLen;
+			miMemItemsNum--;
 			miTotalFree += iUseLen;
 			mpTotalMemMutex->UnLock();
 		} else if (iRealLen % miAlign == 0) {
