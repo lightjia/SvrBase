@@ -17,6 +17,7 @@ uv_tcp_t* CUvTcpSvr::AllocTcpCli() {
 int CUvTcpSvr::FreeTcpCli(uv_tcp_t* pTcpCli) {
 	ASSERT_RET_VALUE(pTcpCli && mpUvLoop, 1);
 	uv_close((uv_handle_t*)pTcpCli, NULL);
+	MemFree(pTcpCli);
 	return 0;
 }
 
