@@ -7,7 +7,7 @@ public:
 	~CUvBarrier();
 
 public:
-	int Init(int iCount);
+	int Init(unsigned int iCount);
 	int Wait();
 
 private:

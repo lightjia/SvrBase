@@ -10,7 +10,7 @@ CUvBarrier::~CUvBarrier() {
 	}
 }
 
-int CUvBarrier::Init(int iCount) {
+int CUvBarrier::Init(unsigned int iCount) {
 	mbInit = true;
 	return uv_barrier_init(&mstBarrier, iCount);
 }
