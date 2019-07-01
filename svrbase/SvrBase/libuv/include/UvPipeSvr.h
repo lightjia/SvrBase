@@ -12,6 +12,7 @@ public:
 protected:
     virtual int OnAccept(uv_pipe_t* pUvPipe) = 0;//TODO free pUvPipe
     virtual uv_pipe_t* AllocPipeCli();
+	virtual int FreePipeCli(uv_pipe_t* pPipeCli);
 
 protected:
     int Listen(int iBackLog = 5);

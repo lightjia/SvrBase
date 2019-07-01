@@ -37,7 +37,7 @@ void CUvTcpSvr::DoConn(int iStatus) {
 	}
 
 	if (OnAccept(pTcpCli)) {
-		MemFree(pTcpCli);
+		FreeTcpCli(pTcpCli);
 	}
 }
 

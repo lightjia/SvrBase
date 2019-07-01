@@ -8,10 +8,18 @@ CUvPipeSvr::~CUvPipeSvr(){
 }
 
 uv_pipe_t* CUvPipeSvr::AllocPipeCli() {
-    uv_pipe_t* pPipeCli = (uv_pipe_t*)do_malloc(sizeof(uv_pipe_t));
+    uv_pipe_t* pPipeCli = (uv_pipe_t*)MemMalloc(sizeof(uv_pipe_t));
     //Can Use Another Loop In SubClass
     uv_pipe_init(GetUvLoop(), pPipeCli, miIpc);
     return pPipeCli;
+}
+
+int CUvPipeSvr::FreePipeCli(uv_pipe_t* pPipeCli) {
+	ASSERT_RET_VALUE(pPipeCli && mpUvLoop, 1);
+	uv_close((uv_handle_t*)pPipeCli, NULL);
+	MemFree(pPipeCli);
+
+	return 0;
 }
 
 void CUvPipeSvr::DoConn(int iStatus) {
@@ -25,11 +33,12 @@ void CUvPipeSvr::DoConn(int iStatus) {
 	int iRet = uv_accept((uv_stream_t*)mpPipeSvr, (uv_stream_t*)pPipeCli);
 	if (iRet) {
 		LOG_ERR("uv_accept error:%s %s", uv_strerror(iRet), uv_err_name(iRet));
+		FreePipeCli(pPipeCli);
 		return;
 	}
 
 	if (OnAccept(pPipeCli) != 0) {
-		MemFree(pPipeCli);
+		FreePipeCli(pPipeCli);
 	}
 }
 
