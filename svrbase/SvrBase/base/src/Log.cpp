@@ -25,10 +25,11 @@ const static char LOG_COLOR[LOG_LEVEL_MAX][50] = {
 #endif
 
 CLog::CLog(){
-	mlCurFileCount = 0;
+	miCurFileCount = 0;
 	miTotalCount = 0;
 	mbInit = false;
 	mpFile = stdout;
+	miMaxPerLogFileSize = MAX_PER_LOGFILE_SIZE;
 }
 
 CLog::~CLog(){
@@ -36,6 +37,15 @@ CLog::~CLog(){
 		fclose(mpFile);
 		mpFile = NULL;
 	}
+}
+
+int CLog::SetMaxPerLogFileSize(uint64_t iMaxPerLogFileSize) {
+	if (iMaxPerLogFileSize >= miMaxPerLogFileSize) {
+		miMaxPerLogFileSize = iMaxPerLogFileSize;
+		return 0;
+	}
+
+	return 1;
 }
 
 FILE* CLog::GetFile(){
@@ -69,8 +79,8 @@ FILE* CLog::GetFile(){
 int CLog::Check(){
 	//文件过大创建新文件
 	if (mstLogParam.iLogType == LOG_TYPE_FILE || mstLogParam.iLogType == LOG_TYPE_TEE){
-		if (mlCurFileCount >= MAX_PER_LOGFILE_SIZE){
-				mlCurFileCount = 0;
+		if (miCurFileCount >= miMaxPerLogFileSize){
+				miCurFileCount = 0;
 				GetFile();
 		}
 	}
@@ -263,7 +273,7 @@ int CLog::PrintLog(CMemBuffer* pLogBuf, int iLogLevel){
         WriteLog(pLogBuf, iLogLevel, stdout);
     }
 
-    mlCurFileCount += (unsigned long)pLogBuf->GetBuffLen();
+    miCurFileCount += (unsigned long)pLogBuf->GetBuffLen();
 	DODELETE(pLogBuf);
 
 	return Check();

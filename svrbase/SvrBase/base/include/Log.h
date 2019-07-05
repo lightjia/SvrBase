@@ -24,7 +24,6 @@ enum LogLevel{
 
 #define MAX_PER_LOGFILE_SIZE 500*1024*1024	//单个日志文件的大小为500M
 #define MAX_PER_LINE_LOG	1024 * 6	//一行日志最大缓存
-#define MAX_PER_LOG_ITEM_CACHE_SIZE 1024*100 //单个日志项最高缓存
 
 typedef void (*log_cb)(int iLevel, const char *pData);
 typedef void(*log_file_change_cb)(const std::string&);
@@ -58,6 +57,7 @@ public:
 	int SetLogType(int iType);
 	int SetLogLevel(int iLevel);
 	int SetLogPath(const char* pPath);
+	int SetMaxPerLogFileSize(uint64_t iMaxPerLogFileSize);
 	uint64_t GetTotalLogLen() { return miTotalCount; }
 
 protected:
@@ -72,7 +72,7 @@ private:
 
 private:
 	tagLogInitParam mstLogParam;
-	unsigned long mlCurFileCount;
+	uint64_t miCurFileCount;
 	uint64_t miTotalCount;
 	bool mbInit;
 	FILE* mpFile;
@@ -80,6 +80,7 @@ private:
 	CUvMutex mcLogMutex;
     std::map<int, CMemBuffer*> mMapLogItems;
     CUvCond mcCond;
+	uint64_t miMaxPerLogFileSize;
 };
 
 #define sLog CLog::Instance()
