@@ -2,33 +2,33 @@
 
 #define OPENSSL_DES_ALIGN_LEN   8
 COpensslDes::COpensslDes(){
-    BZERO(mlKey);
+	miAlign = OPENSSL_DES_ALIGN_LEN;
 }
 
 COpensslDes::~COpensslDes(){
-    DOFREE(mlKey.pStr);
 }
 
-void COpensslDes::SetKey(const char* pKey, int iLen) {
+void  COpensslDes::SetAligin(int iAlign) {
+	if (iAlign > 0 && iAlign <= OPENSSL_DES_ALIGN_LEN) {
+		miAlign = iAlign;
+	}
+}
+
+void COpensslDes::SetKey(const char* pKey, unsigned int iLen) {
     ASSERT_RET(pKey && iLen > 0);
-    DOFREE(mlKey.pStr);
-    mlKey.pStr = (char*)do_malloc(sizeof(char)*iLen);
-    mlKey.iLen = iLen;
-    memcpy(mlKey.pStr, pKey, iLen);
+	mcKey.Append(pKey, iLen);
 }
 
-len_str COpensslDes::DesEncode(const char* psrc, size_t iLen) {
-    len_str lRet;
-    BZERO(lRet);
-
-    ASSERT_RET_VALUE(psrc && iLen > 0 && mlKey.pStr && mlKey.iLen > 0, lRet);
+CMemBuffer* COpensslDes::DesEncode(const char* psrc, size_t iLen) {
+	CMemBuffer* pRet = NULL;
+    ASSERT_RET_VALUE(psrc && iLen > 0 && mcKey.GetBuffer() && mcKey.GetBuffLen() > 0, pRet);
     DES_cblock keyEncrypt;
-    memset(keyEncrypt, 0, OPENSSL_DES_ALIGN_LEN);
+    memset(keyEncrypt, 0, miAlign);
     // 构造补齐后的密钥    
-    if (mlKey.iLen <= OPENSSL_DES_ALIGN_LEN) {
-        memcpy(keyEncrypt, mlKey.pStr, mlKey.iLen);
+    if (mcKey.GetBuffLen() <= miAlign) {
+        memcpy(keyEncrypt, mcKey.GetBuffer(), mcKey.GetBuffLen());
     } else {
-        memcpy(keyEncrypt, mlKey.pStr, OPENSSL_DES_ALIGN_LEN);
+        memcpy(keyEncrypt, mcKey.GetBuffer(), miAlign);
     }
         
 
@@ -36,62 +36,61 @@ len_str COpensslDes::DesEncode(const char* psrc, size_t iLen) {
     DES_key_schedule keySchedule;
     DES_set_key_unchecked(&keyEncrypt, &keySchedule);
 
-    // 循环加密，每OPENSSL_DES_ALIGN_LEN字节一次    
+    // 循环加密，每miAlign字节一次    
     const_DES_cblock inputText;
     DES_cblock outputText;
     std::vector<unsigned char> vecCiphertext;
     unsigned char tmp[OPENSSL_DES_ALIGN_LEN];
 
-    for (int i = 0; i < iLen / OPENSSL_DES_ALIGN_LEN; i++){
-        memcpy(inputText, psrc + i * OPENSSL_DES_ALIGN_LEN, OPENSSL_DES_ALIGN_LEN);
+    for (int i = 0; i < iLen / miAlign; i++){
+        memcpy(inputText, psrc + i * miAlign, miAlign);
         DES_ecb_encrypt(&inputText, &outputText, &keySchedule, DES_ENCRYPT);
-        memcpy(tmp, outputText, OPENSSL_DES_ALIGN_LEN);
+        memcpy(tmp, outputText, miAlign);
 
-        for (int j = 0; j < OPENSSL_DES_ALIGN_LEN; j++) {
+        for (int j = 0; j < miAlign; j++) {
             vecCiphertext.push_back(tmp[j]);
         }
     }
 
-    if (iLen % OPENSSL_DES_ALIGN_LEN != 0){
-        int tmp1 = (int)((iLen / OPENSSL_DES_ALIGN_LEN) * OPENSSL_DES_ALIGN_LEN);
+    if (iLen % miAlign != 0){
+        int tmp1 = (int)((iLen / miAlign) * miAlign);
         int tmp2 = (int)(iLen - tmp1);
-        memset(inputText, 0, OPENSSL_DES_ALIGN_LEN);
+        memset(inputText, 0, miAlign);
         memcpy(inputText, psrc + tmp1, tmp2);
         // 加密函数    
         DES_ecb_encrypt(&inputText, &outputText, &keySchedule, DES_ENCRYPT);
-        memcpy(tmp, outputText, OPENSSL_DES_ALIGN_LEN);
+        memcpy(tmp, outputText, miAlign);
 
-        for (int j = 0; j < OPENSSL_DES_ALIGN_LEN; j++) {
+        for (int j = 0; j < miAlign; j++) {
             vecCiphertext.push_back(tmp[j]);
         }
             
     }
 
     if (vecCiphertext.size() > 0) {
-        lRet.iLen = vecCiphertext.size();
-        lRet.pStr = (char*)do_malloc(sizeof(char) * (lRet.iLen + 1));
-        lRet.pStr[lRet.iLen] = '\0';
-        for (size_t i = 0; i < lRet.iLen; ++i) {
-            lRet.pStr[i] = (char)vecCiphertext[i];
+		pRet = new CMemBuffer();
+		pRet->SetBuffLen(vecCiphertext.size());
+		pRet->AllocBuffer(pRet->GetBuffLen());
+		char* pDst = (char*)pRet->GetBuffer();
+        for (size_t i = 0; i < pRet->GetBuffLen(); ++i) {
+			pDst[i] = (char)vecCiphertext[i];
         }
     }
 
-    return lRet;
+    return pRet;
 }
 
-len_str COpensslDes::DesDecode(const char* psrc, size_t iLen) {
-    len_str lRet;
-    BZERO(lRet);
-    ASSERT_RET_VALUE(psrc && iLen > 0 && mlKey.pStr && mlKey.iLen > 0, lRet);
+CMemBuffer* COpensslDes::DesDecode(const char* psrc, size_t iLen) {
+	CMemBuffer* pRet = NULL;
+    ASSERT_RET_VALUE(psrc && iLen > 0 && mcKey.GetBuffer() && mcKey.GetBuffLen() > 0, pRet);
 
     DES_cblock keyEncrypt;
-    memset(keyEncrypt, 0, OPENSSL_DES_ALIGN_LEN);
-
-    if (mlKey.iLen <= OPENSSL_DES_ALIGN_LEN) {
-        memcpy(keyEncrypt, mlKey.pStr, mlKey.iLen);
-    } else {
-        memcpy(keyEncrypt, mlKey.pStr, OPENSSL_DES_ALIGN_LEN);
-    }
+    memset(keyEncrypt, 0, miAlign);
+	if (mcKey.GetBuffLen() <= miAlign) {
+		memcpy(keyEncrypt, mcKey.GetBuffer(), mcKey.GetBuffLen());
+	} else {
+		memcpy(keyEncrypt, mcKey.GetBuffer(), miAlign);
+	}
 
     DES_key_schedule keySchedule;
     DES_set_key_unchecked(&keyEncrypt, &keySchedule);
@@ -101,37 +100,39 @@ len_str COpensslDes::DesDecode(const char* psrc, size_t iLen) {
     std::vector<unsigned char> vecCleartext;
     unsigned char tmp[OPENSSL_DES_ALIGN_LEN];
 
-    for (int i = 0; i < iLen / OPENSSL_DES_ALIGN_LEN; i++){
-        memcpy(inputText, psrc + i * OPENSSL_DES_ALIGN_LEN, OPENSSL_DES_ALIGN_LEN);
+    for (int i = 0; i < iLen / miAlign; i++){
+        memcpy(inputText, psrc + i * miAlign, miAlign);
         DES_ecb_encrypt(&inputText, &outputText, &keySchedule, DES_DECRYPT);
-        memcpy(tmp, outputText, OPENSSL_DES_ALIGN_LEN);
+        memcpy(tmp, outputText, miAlign);
 
-        for (int j = 0; j < OPENSSL_DES_ALIGN_LEN; j++) {
+        for (int j = 0; j < miAlign; j++) {
             vecCleartext.push_back(tmp[j]);
         }
     }
 
-    if (iLen % OPENSSL_DES_ALIGN_LEN != 0){
-        int tmp1 = (int)((iLen / OPENSSL_DES_ALIGN_LEN) * OPENSSL_DES_ALIGN_LEN);
+    if (iLen % miAlign != 0){
+        int tmp1 = (int)((iLen / miAlign) * miAlign);
         int tmp2 = (int)(iLen - tmp1);
-        memset(inputText, 0, OPENSSL_DES_ALIGN_LEN);
+        memset(inputText, 0, miAlign);
         memcpy(inputText, psrc + tmp1, tmp2);
         // 解密函数    
         DES_ecb_encrypt(&inputText, &outputText, &keySchedule, DES_DECRYPT);
-        memcpy(tmp, outputText, OPENSSL_DES_ALIGN_LEN);
+        memcpy(tmp, outputText, miAlign);
 
-        for (int j = 0; j < OPENSSL_DES_ALIGN_LEN; j++){
+        for (int j = 0; j < miAlign; j++){
             vecCleartext.push_back(tmp[j]);
         }
     }
 
     if (vecCleartext.size() > 0) {
-        lRet.iLen = vecCleartext.size();
-        lRet.pStr = (char*)do_malloc(sizeof(char) * (lRet.iLen + 1));
-        lRet.pStr[lRet.iLen] = '\0';
-        for (size_t i = 0; i < lRet.iLen; ++i) {
-            lRet.pStr[i] = (char)vecCleartext[i];
+		pRet = new CMemBuffer();
+		pRet->SetBuffLen(vecCleartext.size());
+		pRet->AllocBuffer(pRet->GetBuffLen());
+		char* pDst = (char*)pRet->GetBuffer();
+        for (size_t i = 0; i < pRet->GetBuffLen(); ++i) {
+			pDst[i] = (char)vecCleartext[i];
         }
     }
-    return lRet;
+
+    return pRet;
 }

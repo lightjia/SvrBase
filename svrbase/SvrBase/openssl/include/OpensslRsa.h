@@ -8,13 +8,13 @@ public:
     ~COpensslRsa();
 
 public:
-    void SetPubKey(const char* pKey, int iLen);
-    void SetPriKey(const char* pKey, int iLen);
-    len_str RsaEncode(const char* psrc, size_t iLen);
-    len_str RsaDecode(const char* psrc, size_t iLen);
+    void SetPubKey(const char* pKey, unsigned int iLen);
+    void SetPriKey(const char* pKey, unsigned int iLen);
+	CMemBuffer* RsaEncode(const char* psrc, size_t iLen);
+	CMemBuffer* RsaDecode(const char* psrc, size_t iLen);
 
 private:
-    len_str mlPubKey;
-    len_str mlPriKey;
+    CMemBuffer mcPubKey;
+	CMemBuffer mcPriKey;
 };
 #endif

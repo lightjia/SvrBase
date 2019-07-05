@@ -1,5 +1,5 @@
-
 #include "util.h"
+#include "MemMgr.h"
 
 void* do_malloc(size_t iLen)
 {
@@ -616,7 +616,7 @@ int make_dirs(const char* path)
 		return 1;
 	}
 
-	char* pTmp = (char*)do_malloc(len + 3);
+	char* pTmp = (char*)sMemMgr->MemMalloc(len + 3);
 	if (NULL == pTmp)
 	{
 		return 1;
@@ -644,7 +644,7 @@ int make_dirs(const char* path)
 		pTmp[i] = '/';
 	}
 
-	DOFREE(pTmp);
+	sMemMgr->MemFree(pTmp);
 
 	return make_dir(path);
 }

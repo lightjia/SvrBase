@@ -1,4 +1,5 @@
 #include "OpensslBase64.h"
+#include "MemMgr.h"
 
 COpensslBase64::COpensslBase64(){
 }
@@ -6,10 +7,10 @@ COpensslBase64::COpensslBase64(){
 COpensslBase64::~COpensslBase64(){
 }
 
-len_str COpensslBase64::Base64Encode(const char * pSrc, int iSrcLen, bool bNewLine) {
-    len_str lRet;
-    BZERO(lRet);
-    ASSERT_RET_VALUE(pSrc && iSrcLen > 0, lRet);
+CMemBuffer* COpensslBase64::Base64Encode(const char * pSrc, int iSrcLen, bool bNewLine) {
+	CMemBuffer* pRet = NULL;
+    ASSERT_RET_VALUE(pSrc && iSrcLen > 0, pRet);
+	pRet = new CMemBuffer();
     BIO *b64 = BIO_new(BIO_f_base64());
     if (b64) {
         if (!bNewLine) {
@@ -24,24 +25,21 @@ len_str COpensslBase64::Base64Encode(const char * pSrc, int iSrcLen, bool bNewLi
             BUF_MEM * bptr = NULL;
             BIO_get_mem_ptr(b64, &bptr);
 
-            lRet.iLen = bptr->length;
-            lRet.pStr = (char *)do_malloc((bptr->length + 1) * sizeof(char));
-            memcpy(lRet.pStr, bptr->data, bptr->length);
-            lRet.pStr[bptr->length] = '\0';
+			pRet->Append(bptr->data, bptr->length);
+			pRet->AppendNul();
         }
        
         BIO_free_all(b64);
     }
    
-    return lRet;
+    return pRet;
 }
 
-len_str COpensslBase64::Base64Decode(const char * pSrc, int iSrcLen, bool bNewLine) {
-    len_str lRet;
-    BZERO(lRet);
-    ASSERT_RET_VALUE(pSrc && iSrcLen > 0, lRet);
-    lRet.iLen = iSrcLen;
-    lRet.pStr = (char *)do_malloc((iSrcLen + 1) * sizeof(char));
+CMemBuffer* COpensslBase64::Base64Decode(const char * pSrc, int iSrcLen, bool bNewLine) {
+	CMemBuffer* pRet = NULL;
+    ASSERT_RET_VALUE(pSrc && iSrcLen > 0, pRet);
+	pRet->SetBuffLen((iSrcLen + 1) * sizeof(char));
+	pRet->AllocBuffer(pRet->GetBuffLen());
     BIO *b64 = BIO_new(BIO_f_base64());
     if (b64) {
         if (!bNewLine) {
@@ -51,11 +49,11 @@ len_str COpensslBase64::Base64Decode(const char * pSrc, int iSrcLen, bool bNewLi
         BIO * bmem = BIO_new_mem_buf(pSrc, iSrcLen);
         if (bmem) {
             bmem = BIO_push(b64, bmem);
-            BIO_read(bmem, lRet.pStr, iSrcLen);
+            BIO_read(bmem, pRet->GetBuffer(), iSrcLen);
         }
 
         BIO_free_all(b64);
     }
     
-    return lRet;
+    return pRet;
 }

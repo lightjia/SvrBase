@@ -1,31 +1,28 @@
 #include "UvUtil.h"
+#include "MemMgr.h"
+#include "MemBuffer.h"
 
 #define UV_UTIL_BUF_LEN 1024
 typedef int(*uv_oper_fun)(char* buffer, size_t* size);
 
 std::string UvFunc(uv_oper_fun pFunc) {
-    size_t iRealLen = 0;
-    len_str lStr;
-    BZERO(lStr);
-    lStr.iLen = UV_UTIL_BUF_LEN;
+    size_t iRealLen = UV_UTIL_BUF_LEN;
     int iRet = 0;
+	CMemBuffer cBuffer;
     do {
-        lStr.pStr = (char*)do_malloc(lStr.iLen * sizeof(char));
-        iRealLen = lStr.iLen;
+		cBuffer.AllocBuffer(iRealLen * sizeof(char));
         int iRet = 0;
-        if (iRet = pFunc(lStr.pStr, &iRealLen)) {
+        if (iRet = pFunc((char*)cBuffer.GetBuffer(), &iRealLen)) {
             iRealLen = 0;
             if (UV_ENOBUFS == iRet) {
-                lStr.iLen *= 2;
-                DOFREE(lStr.pStr);
+				iRealLen *= 2;
             } else {
                 break;
             }
         }
     } while (iRet);
 
-    std::string strRet(lStr.pStr, iRealLen);
-    DOFREE(lStr.pStr);
+    std::string strRet((char*)cBuffer.GetBuffer(), iRealLen);
     return strRet;
 }
 
@@ -72,20 +69,16 @@ uv_pid_t CUvUtil::GetPpid() {
 }
 
 std::string CUvUtil::GetProcessTitle() {
-    size_t iRealLen = 0;
-    len_str lStr;
-    BZERO(lStr);
-    lStr.iLen = UV_UTIL_BUF_LEN;
+    size_t iRealLen = UV_UTIL_BUF_LEN;
     int iRet = 0;
+	CMemBuffer cBuffer;
     do {
-        lStr.pStr = (char*)do_malloc(lStr.iLen * sizeof(char));
-        iRealLen = lStr.iLen;
+        cBuffer.AllocBuffer(iRealLen * sizeof(char));
         int iRet = 0;
-        if (iRet = uv_get_process_title(lStr.pStr, iRealLen)) {
+        if (iRet = uv_get_process_title((char*)cBuffer.GetBuffer(), iRealLen)) {
             iRealLen = 0;
             if (UV_ENOBUFS == iRet) {
-                lStr.iLen *= 2;
-                DOFREE(lStr.pStr);
+				iRealLen *= 2;
             }
             else {
                 break;
@@ -93,8 +86,7 @@ std::string CUvUtil::GetProcessTitle() {
         }
     } while (iRet);
 
-    std::string strRet(lStr.pStr);
-    DOFREE(lStr.pStr);
+    std::string strRet((char*)cBuffer.GetBuffer(), iRealLen);
     return strRet;
 }
 
@@ -163,29 +155,23 @@ void CUvUtil::FreeInterfaceAddr(uv_interface_address_t* addresses, int count) {
 }
 
 std::string CUvUtil::GetEnv(const char* name) {
-    size_t iRealLen = 0;
-    len_str lStr;
-    BZERO(lStr);
-    lStr.iLen = UV_UTIL_BUF_LEN;
+    size_t iRealLen = UV_UTIL_BUF_LEN;
     int iRet = 0;
+	CMemBuffer cBuffer;
     do {
-        lStr.pStr = (char*)do_malloc(lStr.iLen * sizeof(char));
-        iRealLen = lStr.iLen;
+		cBuffer.AllocBuffer(iRealLen * sizeof(char));
         int iRet = 0;
-        if (iRet = uv_os_getenv(name, lStr.pStr, &iRealLen)) {
+        if (iRet = uv_os_getenv(name, (char*)cBuffer.GetBuffer(), &iRealLen)) {
             iRealLen = 0;
             if (UV_ENOBUFS == iRet) {
-                lStr.iLen *= 2;
-                DOFREE(lStr.pStr);
-            }
-            else {
+				iRealLen *= 2;
+            } else {
                 break;
             }
         }
     } while (iRet);
 
-    std::string strRet(lStr.pStr, iRealLen);
-    DOFREE(lStr.pStr);
+    std::string strRet((char*)cBuffer.GetBuffer(), iRealLen);
     return strRet;
 }
 
