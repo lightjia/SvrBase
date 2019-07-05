@@ -235,7 +235,6 @@ wchar_t* char_2_wchar(const char* pStr)
 		if (iLen > 0)
 		{
 			iLen += 1;
-			fprintf(stderr, "char_2_wchar malloc\n");
 			pRet = (wchar_t*)do_malloc(iLen * sizeof(wchar_t));
 			if (NULL != pRet)
 			{
@@ -261,7 +260,6 @@ char* wchar_2_char(const wchar_t* pStr)
 		if (iLen > 0)
 		{
 			iLen += 1;
-			fprintf(stderr, "wchar_2_char malloc\n");
 			pRet = (char*)do_malloc(iLen * sizeof(char));
 			if (NULL != pRet)
 			{
@@ -548,7 +546,6 @@ len_str get_bmp(const void* pBmp, int width, int height, int bitCount)
 	bmpHeader.bfReserved2 = 0;    // ×ÜÎª0
 
 	stImg.iLen = bmpHeader.bfSize;
-	fprintf(stderr, "get_bmp malloc\n");
 	stImg.pStr = (char*)do_malloc(sizeof(char)*bmpHeader.bfSize);
 	if (NULL == stImg.pStr)
 	{
@@ -619,7 +616,6 @@ int make_dirs(const char* path)
 		return 1;
 	}
 
-	fprintf(stderr, "make_dirs malloc\n");
 	char* pTmp = (char*)do_malloc(len + 3);
 	if (NULL == pTmp)
 	{
