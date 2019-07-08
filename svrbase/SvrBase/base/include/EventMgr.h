@@ -2,11 +2,12 @@
 #define __CEVENTMGR__H_
 #include "singleton.h"
 #include "Log.h"
+#include "RcObject.h"
 #include <string>
 #include <map>
 #include <set>
 
-class CEventListener {
+class CEventListener : public CRcObject {
 public:
     virtual int OnEvent(void* pParam) = 0;
 };
@@ -25,5 +26,5 @@ private:
     std::map<std::string, std::set<CEventListener*>> mmapEventListeners;
     CUvMutex mcMapEventListenersMutex;
 };
-
+#define sEventMgr CEventMgr::Instance()
 #endif

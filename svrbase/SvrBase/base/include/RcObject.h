@@ -1,18 +1,17 @@
 #ifndef __CRCOBJECT__H_
 #define __CRCOBJECT__H_
 #include "UvMutex.h"
-class CRcObject
-{
+class CRcObject{
 public:
 	CRcObject();
 	virtual ~CRcObject();
 
 public:
 	void IncRef();
-	long DecRef();
+	int DecRef();
 
 protected:
-	long mlReferCount;
+	int miReferCount;
 	CUvMutex mcRefMutex;
 };
 

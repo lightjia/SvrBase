@@ -1,31 +1,24 @@
-
 #include "RcObject.h"
 
-CRcObject::CRcObject()
-{
-	mlReferCount = 0;
+CRcObject::CRcObject(){
+	miReferCount = 0;
 }
 
-CRcObject::~CRcObject()
-{
+CRcObject::~CRcObject(){
 }
 
-void CRcObject::IncRef()
-{
+void CRcObject::IncRef(){
 	mcRefMutex.Lock();
-	//atomic_change(&mlReferCount, (int)1);
-	++mlReferCount;
+	++miReferCount;
 	mcRefMutex.UnLock();
 }
 
-long CRcObject::DecRef()
-{
-	long lRet = 1;
+int CRcObject::DecRef(){
+	int iRet = 1;
 	mcRefMutex.Lock();
-	//atomic_change(&mlReferCount, (int)-1);
-	--mlReferCount;
-	lRet = mlReferCount;
+	--miReferCount;
+	iRet = miReferCount;
 	mcRefMutex.UnLock();
 
-	return lRet;
+	return iRet;
 }
