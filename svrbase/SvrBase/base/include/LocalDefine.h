@@ -38,6 +38,16 @@ typedef struct tagBITMAPINFOHEADER{
 #define _strdup	strdup
 #endif
 
+typedef signed char _i8;
+typedef unsigned char _u8;
+typedef signed short _i16;
+typedef unsigned short _u16;
+typedef signed int _i32;
+typedef unsigned int _u32;
+typedef signed long long _i64;
+typedef unsigned long long _u64;
+
+#pragma pack(1)
 struct systemtime_t
 {
 	int tmsec;     /* seconds after the minute - [0,59] */
@@ -52,7 +62,6 @@ struct systemtime_t
 	int tmmilliseconds;/*milliseconds after the sec[0,1000]*/
 };
 
-#pragma pack(1)
 struct len_str
 {
 	char* pStr;
